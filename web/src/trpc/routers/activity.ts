@@ -2,7 +2,7 @@ import { z } from "zod";
 import { createTRPCRouter, baseProcedure } from "../init";
 import { executionLogs } from "../../db";
 import { eq, desc } from "drizzle-orm";
-import { getAdapter } from "../../../../packages/agent/dist/index.js";
+import { getAdapter } from "@0xvisor/agent/";
 
 const ethereumAddress = z
   .string()

@@ -8,7 +8,7 @@ import {
   policyCompiler,
   policyTemplates,
   serializeBigInt,
-} from "../../../../packages/agent/dist/index.js";
+} from "@0xvisor/agent/";
 
 const ethereumAddress = z
   .string()
