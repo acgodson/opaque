@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Agent package is pre-built via prepare script, no need to transpile
+  serverExternalPackages: ["@0xvisor/agent"],
 };
 
 export default nextConfig;
