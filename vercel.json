@@ -1,6 +1,5 @@
 {
-  "buildCommand": "cd /vercel/path0 && pnpm --filter @0xvisor/agent build && pnpm --filter @0xvisor/web build",
+  "buildCommand": "cd web && pnpm build",
   "installCommand": "pnpm install --frozen-lockfile",
-  "outputDirectory": "web/.next",
-  "ignoreCommand": "git diff --quiet HEAD^ HEAD ./"
+  "outputDirectory": "web/.next"
 }
