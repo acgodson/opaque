@@ -8,6 +8,7 @@ import { usePermission } from "../../hooks/usePermission";
 import { trpc } from "../../trpc/client";
 import type { CompiledPolicy } from "../../types/policy";
 import { SignalStatusWidget } from "../../components/SignalStatusWidget";
+import { AdapterPlayground } from "../../components/AdapterPlayground";
 
 interface InstalledAdapter {
   id: number;
@@ -189,7 +190,7 @@ export default function Dashboard() {
 
               <div className="bg-black/50 rounded-lg p-4 mb-4">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="text-2xl">📋</div>
+                  <div className="w-2 h-2 rounded-full bg-blue-500"></div>
                   <div>
                     <div className="font-medium">{compiledPolicyData.policy?.name || "Policy"}</div>
                     {compiledPolicyData.adapterId && (
@@ -257,7 +258,6 @@ export default function Dashboard() {
                 </div>
               ) : installedAdapters.length === 0 ? (
                 <div className="text-center py-8 text-zinc-400">
-                  <div className="text-4xl mb-3">🤖</div>
                   <p className="mb-2">No adapters installed yet</p>
                   <p className="text-sm">Install an adapter to start automating</p>
                 </div>
@@ -266,10 +266,9 @@ export default function Dashboard() {
                   {installedAdapters.map((adapter) => (
                     <div
                       key={adapter.id}
-                      className="flex items-center justify-between p-4 bg-zinc-800/50 rounded-lg"
+                      className="p-4 bg-zinc-800/50 rounded-lg space-y-3"
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="text-3xl">{adapter.icon}</div>
+                      <div className="flex items-center justify-between">
                         <div>
                           <div className="font-medium">{adapter.name}</div>
                           <div className="text-xs text-zinc-400">
@@ -281,14 +280,25 @@ export default function Dashboard() {
                             </div>
                           )}
                         </div>
-                      </div>
-                      <div className="flex items-center gap-3">
                         <div className="flex items-center gap-2">
                           <div className={`w-2 h-2 rounded-full ${adapter.isActive ? 'bg-green-500' : 'bg-gray-500'}`}></div>
                           <span className={`text-xs ${adapter.isActive ? 'text-green-400' : 'text-gray-400'}`}>
                             {adapter.isActive ? 'Active' : 'Inactive'}
                           </span>
                         </div>
+                      </div>
+                      <div className="flex items-center justify-between text-xs pt-2 border-t border-zinc-700">
+                        <span className="text-zinc-500">Session Account:</span>
+                        <span className="font-mono text-zinc-400">
+                          {adapter.sessionAddress ? `${adapter.sessionAddress.slice(0, 8)}...${adapter.sessionAddress.slice(-6)}` : 'No session'}
+                        </span>
+                      </div>
+                      <div className="pt-2">
+                        <AdapterPlayground
+                          adapterId={adapter.adapterId}
+                          adapterName={adapter.name}
+                          userAddress={address!}
+                        />
                       </div>
                     </div>
                   ))}

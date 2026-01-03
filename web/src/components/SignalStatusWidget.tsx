@@ -32,11 +32,10 @@ export function SignalStatusWidget() {
       </div>
 
       <div className="space-y-4">
-        {/* Gas Signal */}
         {signals?.gas && (
           <div className="flex items-center justify-between p-3 bg-zinc-800/50 rounded-lg">
             <div className="flex items-center gap-3">
-              <div className="text-2xl">⛽</div>
+              <div className="w-2 h-2 rounded-full bg-green-500"></div>
               <div>
                 <div className="text-sm font-medium">Gas Price</div>
                 <div className="text-xs text-zinc-400">Sepolia Network</div>
@@ -49,11 +48,10 @@ export function SignalStatusWidget() {
           </div>
         )}
 
-        {/* Time Signal */}
         {signals?.time && (
           <div className="flex items-center justify-between p-3 bg-zinc-800/50 rounded-lg">
             <div className="flex items-center gap-3">
-              <div className="text-2xl">🕐</div>
+              <div className="w-2 h-2 rounded-full bg-blue-500"></div>
               <div>
                 <div className="text-sm font-medium">Current Time</div>
                 <div className="text-xs text-zinc-400">
@@ -72,31 +70,27 @@ export function SignalStatusWidget() {
           </div>
         )}
 
-        {/* Envio Signal */}
         {signals?.envio && (
           <div className="space-y-2">
             <div className="flex items-center justify-between p-3 bg-zinc-800/50 rounded-lg">
               <div className="flex items-center gap-3">
-                <div className="text-2xl">📡</div>
-                <div>
-                  <div className="text-sm font-medium">Envio Indexer</div>
-                  <div className="text-xs text-zinc-400">On-chain Monitoring</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
                 <div
                   className={`w-2 h-2 rounded-full ${
                     signals.envio.envioConnected ? "bg-green-500" : "bg-red-500"
                   }`}
                 ></div>
-                <span
-                  className={`text-xs ${
-                    signals.envio.envioConnected ? "text-green-400" : "text-red-400"
-                  }`}
-                >
-                  {signals.envio.envioConnected ? "Connected" : "Disconnected"}
-                </span>
+                <div>
+                  <div className="text-sm font-medium">Envio Indexer</div>
+                  <div className="text-xs text-zinc-400">On-chain Monitoring</div>
+                </div>
               </div>
+              <span
+                className={`text-xs ${
+                  signals.envio.envioConnected ? "text-green-400" : "text-red-400"
+                }`}
+              >
+                {signals.envio.envioConnected ? "Connected" : "Disconnected"}
+              </span>
             </div>
 
             {/* Envio Stats */}
@@ -117,12 +111,12 @@ export function SignalStatusWidget() {
               </div>
             )}
 
-            {/* Security Alerts */}
             {signals.envio.alerts && signals.envio.alerts.length > 0 && (
               <div className="p-3 bg-red-900/20 border border-red-800 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 rounded-full bg-red-500"></div>
                   <div className="text-red-400 font-medium text-sm">
-                    ⚠️ {signals.envio.alerts.length} Active Alert{signals.envio.alerts.length > 1 ? "s" : ""}
+                    {signals.envio.alerts.length} Active Alert{signals.envio.alerts.length > 1 ? "s" : ""}
                   </div>
                 </div>
                 <div className="space-y-1">

@@ -3,6 +3,7 @@ import { createTRPCRouter, baseProcedure } from "../init";
 import { sessionAccounts } from "../../db";
 import { eq, and } from "drizzle-orm";
 import { sessionManager } from "@0xvisor/agent";
+import { TRPCError } from "@trpc/server";
 
 const ethereumAddress = z
   .string()
@@ -63,7 +64,31 @@ export const sessionRouter = createTRPCRouter({
         };
       } catch (error) {
         console.error("[ERROR] Failed to create session:", error);
-        throw error;
+        console.error("[ERROR] Error type:", typeof error);
+        console.error("[ERROR] Error constructor:", error?.constructor?.name);
+        
+        let errorMessage = "Failed to create session";
+        if (error instanceof Error) {
+          errorMessage = error.message || error.name || errorMessage;
+          if (error.stack) {
+            console.error("[ERROR] Error stack:", error.stack);
+          }
+        } else if (typeof error === "string") {
+          errorMessage = error;
+        } else if (error && typeof error === "object") {
+          try {
+            const stringified = JSON.stringify(error, Object.getOwnPropertyNames(error));
+            errorMessage = stringified !== "{}" ? stringified : String(error);
+          } catch (e) {
+            errorMessage = String(error);
+          }
+        }
+        console.error("[ERROR] Final error message:", errorMessage);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: errorMessage || "Failed to create session",
+          cause: error,
+        });
       }
     }),
 

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { createTRPCRouter, baseProcedure } from "../init";
-import { installedAdapters } from "../../db";
+import { installedAdapters, sessionAccounts } from "../../db";
 import { eq, and } from "drizzle-orm";
 import {
   getAdapter,
@@ -128,19 +128,29 @@ export const adaptersRouter = createTRPCRouter({
         where: eq(installedAdapters.userAddress, normalizedAddress),
       });
 
-      const result = installed.map((i) => {
-        const adapter = getAdapter(i.adapterId);
-        return {
-          id: i.id,
-          adapterId: i.adapterId,
-          name: adapter?.name || i.adapterId,
-          icon: adapter?.icon || "❓",
-          config: i.config,
-          isActive: i.isActive,
-          lastRun: i.lastRun?.toISOString(),
-          installedAt: i.installedAt.toISOString(),
-        };
-      });
+      const result = await Promise.all(
+        installed.map(async (i) => {
+          const adapter = getAdapter(i.adapterId);
+
+          const session = await ctx.db.query.sessionAccounts.findFirst({
+            where: and(
+              eq(sessionAccounts.userAddress, normalizedAddress),
+              eq(sessionAccounts.adapterId, i.adapterId)
+            ),
+          });
+
+          return {
+            id: i.id,
+            adapterId: i.adapterId,
+            name: adapter?.name || i.adapterId,
+            config: i.config,
+            isActive: i.isActive,
+            lastRun: i.lastRun?.toISOString(),
+            installedAt: i.installedAt.toISOString(),
+            sessionAddress: session?.address || null,
+          };
+        })
+      );
 
       return { adapters: result };
     }),

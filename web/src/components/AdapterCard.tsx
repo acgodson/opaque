@@ -6,7 +6,6 @@ export interface Adapter {
   id: string;
   name: string;
   description: string;
-  icon: string;
   category: string;
   features: string[];
   comingSoon?: boolean;
@@ -25,33 +24,27 @@ export function AdapterCard({ adapter }: AdapterCardProps) {
   };
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 hover:border-zinc-700 transition-all group">
-      {/* Icon and Badge */}
-      <div className="flex items-start justify-between mb-4">
-        <div className="text-4xl">{adapter.icon}</div>
+    <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 hover:border-zinc-700 transition-all group">
+      <div className="flex items-start justify-between mb-3">
+        <h3 className="text-lg font-semibold group-hover:text-blue-400 transition-colors">
+          {adapter.name}
+        </h3>
         {adapter.comingSoon && (
           <span className="px-2 py-1 text-xs font-medium bg-zinc-800 text-zinc-400 rounded">
             Coming Soon
           </span>
         )}
       </div>
+      <p className="text-sm text-zinc-400 mb-3 line-clamp-2">{adapter.description}</p>
 
-      {/* Name and Description */}
-      <h3 className="text-xl font-semibold mb-2 group-hover:text-blue-400 transition-colors">
-        {adapter.name}
-      </h3>
-      <p className="text-sm text-zinc-400 mb-4 line-clamp-2">{adapter.description}</p>
-
-      {/* Category */}
-      <div className="mb-4">
+      <div className="mb-3">
         <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-blue-900/30 text-blue-400 rounded">
           <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
           {adapter.category}
         </span>
       </div>
 
-      {/* Features */}
-      <div className="mb-6 space-y-1.5">
+      <div className="mb-4 space-y-1.5">
         {adapter.features.slice(0, 3).map((feature, index) => (
           <div key={index} className="flex items-center gap-2 text-sm text-zinc-400">
             <svg className="w-4 h-4 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -66,11 +59,10 @@ export function AdapterCard({ adapter }: AdapterCardProps) {
         ))}
       </div>
 
-      {/* Install Button */}
       <button
         onClick={handleInstall}
         disabled={adapter.comingSoon}
-        className="w-full px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed rounded-lg font-medium transition-colors"
+        className="w-full px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed rounded-lg font-medium transition-colors"
       >
         {adapter.comingSoon ? "Coming Soon" : "Install Adapter"}
       </button>

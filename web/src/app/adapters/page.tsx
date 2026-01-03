@@ -9,7 +9,6 @@ const AVAILABLE_ADAPTERS: Adapter[] = [
     id: "transfer-bot",
     name: "Transfer Bot",
     description: "Automate token transfers on a schedule with customizable policies for amount limits, time windows, and recipient whitelists",
-    icon: "💸",
     category: "DeFi Automation",
     features: [
       "Scheduled automatic transfers",
@@ -23,7 +22,6 @@ const AVAILABLE_ADAPTERS: Adapter[] = [
     id: "swap-bot",
     name: "Swap Bot",
     description: "Automated token swaps with price targets and slippage protection",
-    icon: "🔄",
     category: "DeFi Automation",
     features: [
       "Automated token swaps",
@@ -37,7 +35,6 @@ const AVAILABLE_ADAPTERS: Adapter[] = [
     id: "dca-bot",
     name: "DCA Bot",
     description: "Dollar-cost averaging strategy for consistent token accumulation",
-    icon: "📈",
     category: "Investment Strategy",
     features: [
       "Recurring purchases",
@@ -51,7 +48,6 @@ const AVAILABLE_ADAPTERS: Adapter[] = [
     id: "yield-optimizer",
     name: "Yield Optimizer",
     description: "Automatically move funds to highest-yielding protocols",
-    icon: "🌾",
     category: "Yield Farming",
     features: [
       "Auto-compound rewards",
@@ -80,14 +76,13 @@ export default function AdaptersMarketplace() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Hero Section */}
       <div className="border-b border-zinc-800 bg-gradient-to-b from-zinc-900 to-black">
-        <div className="max-w-7xl mx-auto px-6 py-16">
+        <div className="max-w-7xl mx-auto px-6 py-12">
           <div className="max-w-3xl">
-            <h1 className="text-5xl font-bold mb-4">
+            <h1 className="text-4xl font-bold mb-3">
               Automation Adapters
             </h1>
-            <p className="text-xl text-zinc-400 mb-8">
+            <p className="text-lg text-zinc-400 mb-6">
               Install pre-built automation adapters with granular policy controls.
               Each adapter runs with MetaMask Advanced Permissions and 0xVisor safety policies.
             </p>
@@ -108,9 +103,8 @@ export default function AdaptersMarketplace() {
         </div>
       </div>
 
-      {/* Filters and Search */}
       <div className="border-b border-zinc-800 bg-black sticky top-16 z-40">
-        <div className="max-w-7xl mx-auto px-6 py-6">
+        <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
             {/* Search Bar */}
             <div className="w-full md:w-96">
@@ -168,13 +162,11 @@ export default function AdaptersMarketplace() {
         </div>
       </div>
 
-      {/* Adapters Grid */}
-      <div className="max-w-7xl mx-auto px-6 py-12">
+      <div className="max-w-7xl mx-auto px-6 py-8">
         {filteredAdapters.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="text-6xl mb-4">🔍</div>
-            <h3 className="text-xl font-semibold mb-2">No adapters found</h3>
-            <p className="text-zinc-400">Try adjusting your search or filters</p>
+          <div className="text-center py-12">
+            <h3 className="text-lg font-semibold mb-2">No adapters found</h3>
+            <p className="text-zinc-400 text-sm">Try adjusting your search or filters</p>
           </div>
         ) : (
           <>
@@ -192,11 +184,10 @@ export default function AdaptersMarketplace() {
         )}
       </div>
 
-      {/* Footer CTA */}
-      <div className="border-t border-zinc-800 bg-zinc-900/50 mt-16">
-        <div className="max-w-7xl mx-auto px-6 py-12 text-center">
-          <h2 className="text-2xl font-bold mb-3">Want to build your own adapter?</h2>
-          <p className="text-zinc-400 mb-6 max-w-2xl mx-auto">
+      <div className="border-t border-zinc-800 bg-zinc-900/50 mt-12">
+        <div className="max-w-7xl mx-auto px-6 py-8 text-center">
+          <h2 className="text-xl font-bold mb-2">Want to build your own adapter?</h2>
+          <p className="text-zinc-400 text-sm mb-4 max-w-2xl mx-auto">
             0xVisor is open-source and extensible. Create custom automation adapters
             and share them with the community.
           </p>
