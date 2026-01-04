@@ -74,18 +74,10 @@ class EnclaveClientImpl implements SessionEnclaveClient, ExecutorEnclaveClient {
     const jsonStr = JSON.stringify(serializedRequest);
 
     console.log("[ENCLAVE CLIENT] Total length:", jsonStr.length);
-    console.log("[ENCLAVE CLIENT] Chars 600-700:", jsonStr.substring(600, 700));
-    console.log(
-      "[ENCLAVE CLIENT] Char at 635:",
-      jsonStr.charAt(635),
-      "Code:",
-      jsonStr.charCodeAt(635)
-    );
-
     console.log("[ENCLAVE CLIENT] Target URL:", this.baseUrl);
     console.log(
       "[ENCLAVE CLIENT] Request size:",
-      JSON.stringify(serializedRequest).length,
+      jsonStr.length,
       "bytes"
     );
     console.log(
@@ -96,14 +88,23 @@ class EnclaveClientImpl implements SessionEnclaveClient, ExecutorEnclaveClient {
     try {
       console.log("[ENCLAVE CLIENT] 🚀 Calling axios...");
 
-      const response = await axios.post(this.baseUrl, serializedRequest, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-        timeout: 60000, // 60 seconds
-        maxBodyLength: Infinity,
-        maxContentLength: Infinity,
-      });
+      const buffer = Buffer.from(jsonStr, "utf8");
+      const contentLength = buffer.length;
+
+      const response = await axios.post(
+        this.baseUrl,
+        buffer,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "Content-Length": contentLength.toString(),
+          },
+          timeout: 60000,
+          maxBodyLength: Infinity,
+          maxContentLength: Infinity,
+          transformRequest: [],
+        }
+      );
 
       console.log("[ENCLAVE CLIENT] ✅ Response received:", response.status);
       return response.data;
@@ -255,7 +256,7 @@ class EnclaveClientImpl implements SessionEnclaveClient, ExecutorEnclaveClient {
     }
 
     console.log("[ENCLAVE CLIENT] 📤 Sending request to enclave...");
-    const response = await this.sendRequest(enclaveRequest);
+    const response = await this.sendRequest(serialized);
     console.log("[ENCLAVE CLIENT] 📨 Received response from enclave");
 
     return {
@@ -270,3 +271,4 @@ class EnclaveClientImpl implements SessionEnclaveClient, ExecutorEnclaveClient {
 }
 
 export const enclaveClient = new EnclaveClientImpl();
+export { EnclaveClientImpl };

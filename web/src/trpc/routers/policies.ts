@@ -81,16 +81,20 @@ export const policiesRouter = createTRPCRouter({
 
       let policies;
       if (input.adapterId) {
-        policies = await ctx.db.query.userPolicies.findMany({
-          where: and(
-            eq(userPolicies.userAddress, normalizedAddress),
-            eq(userPolicies.adapterId, input.adapterId)
-          ),
-        });
+        policies = await ctx.db
+          .select()
+          .from(userPolicies)
+          .where(
+            and(
+              eq(userPolicies.userAddress, normalizedAddress),
+              eq(userPolicies.adapterId, input.adapterId)
+            )
+          );
       } else {
-        policies = await ctx.db.query.userPolicies.findMany({
-          where: eq(userPolicies.userAddress, normalizedAddress),
-        });
+        policies = await ctx.db
+          .select()
+          .from(userPolicies)
+          .where(eq(userPolicies.userAddress, normalizedAddress));
       }
 
       const result = policies.map((p) => {
@@ -131,15 +135,20 @@ export const policiesRouter = createTRPCRouter({
         const normalizedAddress = input.userAddress.toLowerCase();
 
         // Check if policy already exists
-        const existing = await ctx.db.query.userPolicies.findFirst({
-          where: and(
-            eq(userPolicies.userAddress, normalizedAddress),
-            eq(userPolicies.policyType, input.policyType),
-            input.adapterId
-              ? eq(userPolicies.adapterId, input.adapterId)
-              : isNull(userPolicies.adapterId)
-          ),
-        });
+        const existingRows = await ctx.db
+          .select()
+          .from(userPolicies)
+          .where(
+            and(
+              eq(userPolicies.userAddress, normalizedAddress),
+              eq(userPolicies.policyType, input.policyType),
+              input.adapterId
+                ? eq(userPolicies.adapterId, input.adapterId)
+                : isNull(userPolicies.adapterId)
+            )
+          )
+          .limit(1);
+        const existing = existingRows[0] || null;
 
         if (existing) {
           // Update existing policy
@@ -177,9 +186,12 @@ export const policiesRouter = createTRPCRouter({
   toggle: baseProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input, ctx }) => {
-      const existing = await ctx.db.query.userPolicies.findFirst({
-        where: eq(userPolicies.id, input.id),
-      });
+      const existingRows = await ctx.db
+        .select()
+        .from(userPolicies)
+        .where(eq(userPolicies.id, input.id))
+        .limit(1);
+      const existing = existingRows[0] || null;
 
       if (!existing) {
         throw new Error("Policy not found");

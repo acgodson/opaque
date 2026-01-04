@@ -7,5 +7,8 @@
     "dev": "pnpm --filter @0xvisor/web dev",
     "build:agent": "pnpm --filter @0xvisor/agent build",
     "build:web": "pnpm --filter @0xvisor/web build"
+  },
+  "devDependencies": {
+    "tsx": "^4.21.0"
   }
 }

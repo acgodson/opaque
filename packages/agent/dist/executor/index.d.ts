@@ -1,7 +1,7 @@
 import type { Adapter, ProposedTransaction } from "../adapters/types.js";
 export interface Session {
+    address: `0x${string}`;
     sessionAccountId: string;
-    smartAccountAddress: `0x${string}`;
     deployParams: [
         owner: `0x${string}`,
         keyIds: string[],
@@ -9,7 +9,11 @@ export interface Session {
         yValues: bigint[]
     ];
 }
-export interface EnclaveClient {
+export interface InstalledAdapterData {
+    config: Record<string, any>;
+    permissionId?: number;
+}
+export interface ExecutorEnclaveClient {
     signUserOperation(request: {
         sessionAccountId: string;
         preparedUserOperation: any;
@@ -30,10 +34,6 @@ export interface EnclaveClient {
         policyDecisions?: any[];
     }>;
 }
-export interface InstalledAdapterData {
-    config: Record<string, any>;
-    permissionId?: number;
-}
 export interface ExecuteInput {
     userAddress: `0x${string}`;
     adapter: Adapter;
@@ -41,24 +41,22 @@ export interface ExecuteInput {
     installedAdapterData: InstalledAdapterData;
     runtimeParams?: Record<string, any>;
     permissionDelegationData: any;
-    enclaveClient: EnclaveClient;
     policyRules: any[];
     signals: any;
     lastExecutionTime?: Date;
+    enclaveClient?: ExecutorEnclaveClient;
 }
 export declare class Executor {
     executeAdapter(input: ExecuteInput): Promise<{
         success: boolean;
         decision: "ALLOW";
         reason: string;
-        policyDecisions?: undefined;
         userOpHash?: undefined;
         txHash?: undefined;
     } | {
         success: boolean;
-        decision: any;
+        decision: "BLOCK" | "ERROR";
         reason: string;
-        policyDecisions: any[] | undefined;
         userOpHash?: undefined;
         txHash?: undefined;
     } | {
@@ -66,7 +64,6 @@ export declare class Executor {
         decision: "ERROR";
         reason: string;
         userOpHash: `0x${string}`;
-        policyDecisions?: undefined;
         txHash?: undefined;
     } | {
         success: boolean;
@@ -74,14 +71,6 @@ export declare class Executor {
         reason: string;
         txHash: any;
         userOpHash: `0x${string}`;
-        policyDecisions?: undefined;
-    } | {
-        success: boolean;
-        decision: "ERROR";
-        reason: string;
-        policyDecisions?: undefined;
-        userOpHash?: undefined;
-        txHash?: undefined;
     }>;
 }
 export declare const executor: Executor;

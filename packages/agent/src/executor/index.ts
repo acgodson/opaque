@@ -12,12 +12,12 @@ import {
   createPublicClient,
   toHex,
 } from "viem";
-import fs from "fs";
 
+import { createSmartAccountClient } from "permissionless";
 import { createPimlicoClient } from "permissionless/clients/pimlico";
 import { entryPoint07Address } from "viem/account-abstraction";
 import { sepolia } from "viem/chains";
-import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
+import { privateKeyToAccount } from "viem/accounts";
 
 import type {
   Adapter,
@@ -26,8 +26,8 @@ import type {
 } from "../adapters/types.js";
 
 export interface Session {
-  sessionAccountId: string;
-  smartAccountAddress: `0x${string}`;
+  address: `0x${string}`;
+  sessionAccountId: string; // For enclave-based signing
   deployParams: [
     owner: `0x${string}`,
     keyIds: string[],
@@ -36,7 +36,12 @@ export interface Session {
   ];
 }
 
-export interface EnclaveClient {
+export interface InstalledAdapterData {
+  config: Record<string, any>;
+  permissionId?: number;
+}
+
+export interface ExecutorEnclaveClient {
   signUserOperation(request: {
     sessionAccountId: string;
     preparedUserOperation: any;
@@ -58,11 +63,6 @@ export interface EnclaveClient {
   }>;
 }
 
-export interface InstalledAdapterData {
-  config: Record<string, any>;
-  permissionId?: number;
-}
-
 export interface ExecuteInput {
   userAddress: `0x${string}`;
   adapter: Adapter;
@@ -70,10 +70,10 @@ export interface ExecuteInput {
   installedAdapterData: InstalledAdapterData;
   runtimeParams?: Record<string, any>;
   permissionDelegationData: any;
-  enclaveClient: EnclaveClient;
   policyRules: any[];
   signals: any;
   lastExecutionTime?: Date;
+  enclaveClient?: ExecutorEnclaveClient; // Optional enclave client for offline signing
 }
 
 export class Executor {
@@ -85,13 +85,21 @@ export class Executor {
       installedAdapterData,
       runtimeParams,
       permissionDelegationData,
-      enclaveClient,
       policyRules,
       signals,
       lastExecutionTime,
+      enclaveClient,
     } = input;
 
     console.log(`\n=== Executing adapter ${adapter.id} for ${userAddress} ===`);
+
+    if (!enclaveClient) {
+      throw new Error("Enclave client is required for offline signing");
+    }
+
+    if (!session.sessionAccountId) {
+      throw new Error(`Session missing sessionAccountId. Session keys: ${Object.keys(session).join(", ")}`);
+    }
 
     /* ──────────────────────────────── */
     /* Public client                    */
@@ -102,7 +110,21 @@ export class Executor {
       transport: http(process.env.RPC_URL),
     });
 
-    console.log("Smart account address:", session.smartAccountAddress);
+    const dummyAccount = privateKeyToAccount("0x0000000000000000000000000000000000000000000000000000000000000001" as `0x${string}`);
+    
+    const smartAccount = await toMetaMaskSmartAccount({
+      client: publicClient,
+      implementation: Implementation.Hybrid,
+      deployParams: session.deployParams,
+      deploySalt: "0x",
+      signer: { account: dummyAccount },
+    });
+
+    if (smartAccount.address.toLowerCase() !== session.address.toLowerCase()) {
+      throw new Error(
+        `Smart account address mismatch: computed ${smartAccount.address}, expected ${session.address}`
+      );
+    }
 
     /* ──────────────────────────────── */
     /* Adapter execution                */
@@ -160,56 +182,25 @@ export class Executor {
       ],
     });
 
-    /* ──────────────────────────────── */
-    /* Pimlico paymaster                */
-    /* ──────────────────────────────── */
-
+    // Pimlico client
     const pimlicoClient = createPimlicoClient({
       chain: sepolia,
       transport: http(process.env.BUNDLER_URL!),
       entryPoint: { address: entryPoint07Address, version: "0.7" },
     });
 
-    /* ──────────────────────────────── */
-    /* Bundler client                   */
-    /* ──────────────────────────────── */
-
     const bundlerClient = createPublicClient({
       chain: sepolia,
-      transport: http(process.env.BUNDLER_URL),
+      transport: http(process.env.BUNDLER_URL!),
     });
 
     try {
-      // Use temp account ONLY for address derivation
-      const tempPrivateKey = generatePrivateKey();
-      const tempAccount = privateKeyToAccount(tempPrivateKey);
-
-      const smartAccount = await toMetaMaskSmartAccount({
-        client: publicClient,
-        implementation: Implementation.Hybrid,
-        deployParams: session.deployParams,
-        deploySalt: "0x",
-        signer: { account: tempAccount },
-      });
-
-      console.log("Smart account from deployParams:", smartAccount.address);
-      console.log("Expected session address:", session.smartAccountAddress);
-
-      if (
-        smartAccount.address.toLowerCase() !==
-        session.smartAccountAddress.toLowerCase()
-      ) {
-        throw new Error(
-          `Address mismatch! Computed: ${smartAccount.address}, Expected: ${session.smartAccountAddress}`
-        );
-      }
+      /* ──────────────────────────────── */
+      /* 1. Prepare UserOperation         */
+      /* ──────────────────────────────── */
 
       const { prepareUserOperation } = await import("viem/account-abstraction");
-
-      /* ──────────────────────────────── */
-      /* 1. Prepare UserOp                */
-      /* ──────────────────────────────── */
-
+      
       let userOperation = await prepareUserOperation(publicClient, {
         account: smartAccount,
         entryPoint: entryPoint07Address,
@@ -222,17 +213,9 @@ export class Executor {
         ],
       });
 
-      console.log("UserOp prepared:", {
-        sender: userOperation.sender,
-        nonce: userOperation.nonce.toString(),
-        hasFactory: !!(userOperation as any).factory,
-      });
+      console.log("Initial UserOp prepared");
+      console.log("UserOp has factory:", !!userOperation.factory);
 
-      /* ──────────────────────────────── */
-      /* 2. Sponsor via Pimlico           */
-      /* ──────────────────────────────── */
-
-      // Create sponsorship request with dummy signature
       const userOpForSponsorship: any = {
         sender: userOperation.sender,
         nonce: userOperation.nonce,
@@ -242,80 +225,35 @@ export class Executor {
         preVerificationGas: userOperation.preVerificationGas,
         maxFeePerGas: userOperation.maxFeePerGas,
         maxPriorityFeePerGas: userOperation.maxPriorityFeePerGas,
-        signature: "0x", // Dummy signature for gas estimation
+        signature: userOperation.signature,
       };
 
-      // Include factory if account not deployed
-      if ((userOperation as any).factory) {
-        userOpForSponsorship.factory = (userOperation as any).factory;
-        userOpForSponsorship.factoryData = (userOperation as any).factoryData;
-        console.log("Including factory for deployment");
+      if (userOperation.factory) {
+        userOpForSponsorship.factory = userOperation.factory;
+        userOpForSponsorship.factoryData = userOperation.factoryData;
       }
 
-      // Get paymaster sponsorship
       const sponsored = await pimlicoClient.sponsorUserOperation({
-        userOperation: userOpForSponsorship as any,
+        userOperation: userOpForSponsorship,
       });
 
       console.log("UserOp sponsored by paymaster");
 
-      /* ──────────────────────────────── */
-      /* 3. Build FINAL UserOp for Signing */
-      /* ──────────────────────────────── */
-
-      // This is the EXACT structure that will be signed and submitted
-      const finalUserOperation = {
-        sender: userOperation.sender,
-        nonce: userOperation.nonce,
-        callData: userOperation.callData,
-        callGasLimit: userOperation.callGasLimit,
-        verificationGasLimit: userOperation.verificationGasLimit,
-        preVerificationGas: userOperation.preVerificationGas,
-        maxFeePerGas: userOperation.maxFeePerGas,
-        maxPriorityFeePerGas: userOperation.maxPriorityFeePerGas,
-        // Add paymaster fields from sponsorship
-        paymaster: sponsored.paymaster,
-        paymasterVerificationGasLimit: sponsored.paymasterVerificationGasLimit,
-        paymasterPostOpGasLimit: sponsored.paymasterPostOpGasLimit,
-        paymasterData: sponsored.paymasterData,
-        // Placeholder signature - will be replaced by enclave
-        signature: "0x" as `0x${string}`,
-      };
-
-      function bigintReplacer(key: string, value: any) {
-        return typeof value === "bigint" ? value.toString() : value;
-      }
-
-      fs.writeFileSync(
-        "userOp.json",
-        JSON.stringify(finalUserOperation, bigintReplacer, 2)
-      );
-
-      console.log("[Executor] UserOp saved to userOp.json");
-
-      // Add factory fields if present
-      if ((userOperation as any).factory) {
-        (finalUserOperation as any).factory = (userOperation as any).factory;
-        (finalUserOperation as any).factoryData = (
-          userOperation as any
-        ).factoryData;
-      }
-
-      console.log("Final UserOp structure for signing:", {
-        sender: finalUserOperation.sender,
-        nonce: finalUserOperation.nonce.toString(),
-        hasPaymaster: !!finalUserOperation.paymaster,
-        hasFactory: !!(finalUserOperation as any).factory,
-      });
+      // Merge sponsored fields
+      userOperation = {
+        ...userOperation,
+        ...sponsored,
+      } as typeof userOperation;
 
       /* ──────────────────────────────── */
-      /* 4. Send to Enclave for Signing   */
+      /* 3. Sign with Enclave (offline)   */
       /* ──────────────────────────────── */
 
-      console.log("session id", session.sessionAccountId);
+      console.log("Sending UserOp to enclave for signing...");
+      
       const enclaveResponse = await enclaveClient.signUserOperation({
         sessionAccountId: session.sessionAccountId,
-        preparedUserOperation: finalUserOperation,
+        preparedUserOperation: userOperation,
         proposedTx,
         policyRules,
         signals,
@@ -329,30 +267,28 @@ export class Executor {
       if (!enclaveResponse.allowed) {
         return {
           success: false,
-          decision: enclaveResponse.decision as any,
+          decision: enclaveResponse.decision as "BLOCK" | "ERROR",
           reason: enclaveResponse.reason || "Enclave blocked transaction",
-          policyDecisions: enclaveResponse.policyDecisions,
         };
       }
 
-      if (!enclaveResponse.signature || enclaveResponse.signature === "0x") {
-        throw new Error("Invalid signature received from enclave");
+      if (!enclaveResponse.signature) {
+        throw new Error("Enclave did not return signature");
       }
 
       console.log("UserOp signed by enclave");
-      console.log("Signature length:", enclaveResponse.signature.length);
 
-      // Replace placeholder signature with real signature
       const signedUserOperation = {
-        ...finalUserOperation,
+        ...userOperation,
         signature: enclaveResponse.signature,
       };
 
       /* ──────────────────────────────── */
-      /* 5. Broadcast to Bundler           */
+      /* 4. Broadcast to Bundler          */
       /* ──────────────────────────────── */
 
-      // Convert to hex format for bundler
+      const { toHex } = await import("viem");
+      
       const userOpForBundler: any = {
         sender: signedUserOperation.sender,
         nonce: toHex(signedUserOperation.nonce),
@@ -363,39 +299,33 @@ export class Executor {
         maxFeePerGas: toHex(signedUserOperation.maxFeePerGas),
         maxPriorityFeePerGas: toHex(signedUserOperation.maxPriorityFeePerGas),
         signature: signedUserOperation.signature,
-        paymaster: signedUserOperation.paymaster,
-        paymasterVerificationGasLimit: toHex(
-          signedUserOperation.paymasterVerificationGasLimit
-        ),
-        paymasterPostOpGasLimit: toHex(
-          signedUserOperation.paymasterPostOpGasLimit
-        ),
-        paymasterData: signedUserOperation.paymasterData,
+        ...(signedUserOperation.paymaster && {
+          paymaster: signedUserOperation.paymaster,
+          paymasterVerificationGasLimit: toHex(
+            signedUserOperation.paymasterVerificationGasLimit || 0n
+          ),
+          paymasterPostOpGasLimit: toHex(
+            signedUserOperation.paymasterPostOpGasLimit || 0n
+          ),
+          paymasterData: signedUserOperation.paymasterData || "0x",
+        }),
       };
 
-      // Add factory fields if present
-      if ((signedUserOperation as any).factory) {
-        userOpForBundler.factory = (signedUserOperation as any).factory;
-        userOpForBundler.factoryData = (signedUserOperation as any).factoryData;
+      if (signedUserOperation.factory) {
+        userOpForBundler.factory = signedUserOperation.factory;
+        userOpForBundler.factoryData = signedUserOperation.factoryData;
+        console.log("Including factory fields for deployment");
       }
-
-      console.log("Sending to bundler:", {
-        sender: userOpForBundler.sender,
-        nonce: userOpForBundler.nonce,
-        signatureLength: userOpForBundler.signature?.length,
-        hasPaymaster: !!userOpForBundler.paymaster,
-        hasFactory: !!userOpForBundler.factory,
-      });
 
       const sentUserOpHash = (await bundlerClient.request({
         method: "eth_sendUserOperation" as any,
         params: [userOpForBundler, entryPoint07Address],
       })) as `0x${string}`;
 
-      console.log("UserOp sent:", sentUserOpHash);
+      console.log("UserOp sent to bundler:", sentUserOpHash);
 
       /* ──────────────────────────────── */
-      /* 6. Wait for Receipt              */
+      /* 5. Wait for Receipt              */
       /* ──────────────────────────────── */
 
       let receipt: any = null;
@@ -413,9 +343,7 @@ export class Executor {
           // Receipt not ready yet, continue polling
         }
         attempts++;
-        console.log(
-          `Polling for receipt... attempt ${attempts}/${maxAttempts}`
-        );
+        console.log(`Polling for receipt... attempt ${attempts}/${maxAttempts}`);
       }
 
       if (!receipt) {
@@ -426,8 +354,6 @@ export class Executor {
           userOpHash: sentUserOpHash,
         };
       }
-
-      console.log("Transaction successful:", receipt.receipt.transactionHash);
 
       return {
         success: true,

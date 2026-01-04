@@ -48,8 +48,18 @@ export function Navigation() {
               >
                 Dashboard
               </button>
+              <button
+                onClick={() => router.push("/api-explorer")}
+                className={`text-sm font-medium transition-colors ${
+                  isActive("/api-explorer")
+                    ? "text-white"
+                    : "text-zinc-400 hover:text-white"
+                }`}
+              >
+                API Explorer
+              </button>
               <a
-                href="https://github.com/0xvisor/0xvisor"
+                href="https://github.com/acgodson/0xvisor"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm font-medium text-zinc-400 hover:text-white transition-colors"

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { createTRPCRouter, baseProcedure } from "../init";
 import { installedAdapters, permissions, sessionAccounts, executionLogs, userPolicies } from "../../db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import {
   executor,
   getAdapter,
@@ -38,14 +38,18 @@ export const executeRouter = createTRPCRouter({
         console.log(`Adapter: ${input.adapterId}`);
         console.log(`Runtime params:`, input.runtimeParams);
 
-        // 1. Fetch installed adapter from DB
-        const installed = await ctx.db.query.installedAdapters.findFirst({
-          where: and(
-            eq(installedAdapters.userAddress, normalizedAddress),
-            eq(installedAdapters.adapterId, input.adapterId),
-            eq(installedAdapters.isActive, true)
-          ),
-        });
+        const installedRows = await ctx.db
+          .select()
+          .from(installedAdapters)
+          .where(
+            and(
+              eq(installedAdapters.userAddress, normalizedAddress),
+              eq(installedAdapters.adapterId, input.adapterId),
+              eq(installedAdapters.isActive, true)
+            )
+          )
+          .limit(1);
+        const installed = installedRows[0] || null;
 
         if (!installed) {
           return {
@@ -65,12 +69,14 @@ export const executeRouter = createTRPCRouter({
           };
         }
 
-        // 3. Fetch permission from DB if exists
-        const permission = installed.permissionId
-          ? await ctx.db.query.permissions.findFirst({
-              where: eq(permissions.id, installed.permissionId),
-            })
-          : null;
+        const permissionRows = installed.permissionId
+          ? await ctx.db
+              .select()
+              .from(permissions)
+              .where(eq(permissions.id, installed.permissionId))
+              .limit(1)
+          : [];
+        const permission = permissionRows[0] || null;
 
         if (!permission) {
           return {
@@ -80,13 +86,25 @@ export const executeRouter = createTRPCRouter({
           };
         }
 
-        // 4. Fetch session from DB
-        const session = await ctx.db.query.sessionAccounts.findFirst({
-          where: and(
-            eq(sessionAccounts.userAddress, normalizedAddress),
-            eq(sessionAccounts.adapterId, input.adapterId)
-          ),
-        });
+        const sessionRows = await ctx.db
+          .select({
+            id: sessionAccounts.id,
+            sessionAccountId: sessionAccounts.sessionAccountId,
+            address: sessionAccounts.address,
+            userAddress: sessionAccounts.userAddress,
+            adapterId: sessionAccounts.adapterId,
+            deployParams: sessionAccounts.deployParams,
+            createdAt: sessionAccounts.createdAt,
+          })
+          .from(sessionAccounts)
+          .where(
+            and(
+              eq(sessionAccounts.userAddress, normalizedAddress),
+              eq(sessionAccounts.adapterId, input.adapterId)
+            )
+          )
+          .limit(1);
+        const session = sessionRows[0] || null;
 
         if (!session) {
           return {
@@ -95,6 +113,26 @@ export const executeRouter = createTRPCRouter({
             reason: "Session not found",
           };
         }
+
+        if (!session.sessionAccountId) {
+          console.error("[ERROR] Session missing sessionAccountId:", {
+            sessionId: session.id,
+            address: session.address,
+            sessionKeys: Object.keys(session),
+          });
+          return {
+            success: false,
+            decision: "ERROR" as const,
+            reason: "Session missing sessionAccountId",
+          };
+        }
+
+        console.log("[DEBUG] Session object:", {
+          id: session.id,
+          address: session.address,
+          sessionAccountId: session.sessionAccountId,
+          allKeys: Object.keys(session),
+        });
 
         // 5. Propose transaction from adapter
         const config = installed.config as Record<string, any>;
@@ -127,14 +165,18 @@ export const executeRouter = createTRPCRouter({
 
         console.log(`Proposed: ${proposedTx.description}`);
 
-        const lastExecution = await ctx.db.query.executionLogs.findFirst({
-          where: (logs: any, { eq, and }: any) =>
+        const lastExecutionRows = await ctx.db
+          .select()
+          .from(executionLogs)
+          .where(
             and(
-              eq(logs.userAddress, normalizedAddress),
-              eq(logs.adapterId, input.adapterId)
-            ),
-          orderBy: (logs: any, { desc }: any) => [desc(logs.executedAt)],
-        });
+              eq(executionLogs.userAddress, normalizedAddress),
+              eq(executionLogs.adapterId, input.adapterId)
+            )
+          )
+          .orderBy(desc(executionLogs.executedAt))
+          .limit(1);
+        const lastExecution = lastExecutionRows[0] || null;
 
         console.log("Evaluating policies...");
         const evaluation = await policyEngine.evaluate(
@@ -177,22 +219,22 @@ export const executeRouter = createTRPCRouter({
 
         console.log("All policies passed - ALLOW");
 
-        // 9. Fetch policy rules and signals for enclave
-        const userPolicies = await ctx.db.query.userPolicies.findMany({
-          where: (policies: any, { eq, and }: any) =>
+        const userPoliciesRows = await ctx.db
+          .select()
+          .from(userPolicies)
+          .where(
             and(
-              eq(policies.userAddress, normalizedAddress),
-              eq(policies.isEnabled, true)
-            ),
-        });
+              eq(userPolicies.userAddress, normalizedAddress),
+              eq(userPolicies.isEnabled, true)
+            )
+          );
 
-        // 10. Execute transaction with ERC-7710 delegation
         const result = await executor.executeAdapter({
           userAddress: normalizedAddress as `0x${string}`,
           adapter,
           session: {
+            address: session.address as `0x${string}`,
             sessionAccountId: session.sessionAccountId,
-            smartAccountAddress: session.address as `0x${string}`,
             deployParams: session.deployParams as any,
           },
           installedAdapterData: {
@@ -201,13 +243,14 @@ export const executeRouter = createTRPCRouter({
           },
           runtimeParams: input.runtimeParams,
           permissionDelegationData: permissionData,
-          enclaveClient: ctx.enclaveClient,
-          policyRules: userPolicies.map((p) => ({
+          policyRules: userPoliciesRows.map((p) => ({
             type: p.policyType,
-            config: p.config,
+            isEnabled: p.isEnabled,
+            config: typeof p.config === 'string' ? JSON.parse(p.config) : p.config,
           })),
           signals: {},
           lastExecutionTime: lastExecution?.executedAt,
+          enclaveClient: ctx.enclaveClient,
         });
 
         // 10. Update execution log with txHash if successful

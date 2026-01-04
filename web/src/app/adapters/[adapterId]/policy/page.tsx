@@ -14,7 +14,7 @@ import { createEmptyPolicy, type PolicyFormState, type PolicyTemplate } from "..
 const ADAPTER_INFO: Record<string, { name: string; description: string }> = {
   "transfer-bot": {
     name: "Transfer Bot",
-    description: "Automate token transfers on a schedule",
+    description: "Transfers 0.1 USDC or 0.1 ETH per execution. Configure max amount per period (daily/weekly/monthly) with policies.",
   },
   "swap-bot": {
     name: "Swap Bot",

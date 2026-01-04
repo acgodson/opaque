@@ -23,13 +23,14 @@ export const activityRouter = createTRPCRouter({
     .query(async ({ input, ctx }) => {
       const normalizedAddress = input.userAddress.toLowerCase();
 
-      const logs = await ctx.db.query.executionLogs.findMany({
-        where: eq(executionLogs.userAddress, normalizedAddress),
-        orderBy: [desc(executionLogs.executedAt)],
-        limit: input.limit,
-      });
+      const logs = await ctx.db
+        .select()
+        .from(executionLogs)
+        .where(eq(executionLogs.userAddress, normalizedAddress))
+        .orderBy(desc(executionLogs.executedAt))
+        .limit(input.limit);
 
-      const result = logs.map((log) => {
+      const result = logs.map((log: (typeof logs)[number]) => {
         const adapter = getAdapter(log.adapterId);
         return {
           id: log.id,

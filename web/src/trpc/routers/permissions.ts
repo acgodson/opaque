@@ -48,11 +48,13 @@ export const permissionsRouter = createTRPCRouter({
             encodePacked(["address", "address"], [delegator, delegate])
           );
         } else {
-          console.log("Creating delegation server-side (mock for demo)");
+          const isNative = input.tokenAddress === "0x0000000000000000000000000000000000000000";
+          const tokenAddress = isNative ? "0x0000000000000000000000000000000000000000" : input.tokenAddress;
+          
           const result = await delegationService.createTokenDelegation({
             delegator: input.userAddress as `0x${string}`,
             delegate: input.sessionAddress as `0x${string}`,
-            token: input.tokenAddress as `0x${string}`,
+            token: tokenAddress as `0x${string}`,
             amount: BigInt(input.amount),
             period: input.period,
           });
@@ -99,12 +101,15 @@ export const permissionsRouter = createTRPCRouter({
     .query(async ({ input, ctx }) => {
       const normalizedAddress = input.userAddress.toLowerCase();
 
-      const userPermissions = await ctx.db.query.permissions.findMany({
-        where: and(
-          eq(permissions.userAddress, normalizedAddress),
-          eq(permissions.isActive, true)
-        ),
-      });
+      const userPermissions = await ctx.db
+        .select()
+        .from(permissions)
+        .where(
+          and(
+            eq(permissions.userAddress, normalizedAddress),
+            eq(permissions.isActive, true)
+          )
+        );
 
       return {
         permissions: userPermissions.map((p) => ({

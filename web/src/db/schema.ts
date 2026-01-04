@@ -7,6 +7,7 @@ export const sessionAccounts = pgTable('session_accounts', {
   userAddress: text('user_address').notNull(),
   adapterId: text('adapter_id').notNull(),
   deployParams: jsonb('deploy_params').notNull(),
+  // encryptedPrivateKey removed - keys stored only in enclave memory
   createdAt: timestamp('created_at').notNull().defaultNow(),
 });
 

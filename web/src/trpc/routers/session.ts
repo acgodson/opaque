@@ -2,8 +2,11 @@ import { z } from "zod";
 import { createTRPCRouter, baseProcedure } from "../init";
 import { sessionAccounts } from "../../db";
 import { eq, and } from "drizzle-orm";
-import { sessionManager } from "@0xvisor/agent";
 import { TRPCError } from "@trpc/server";
+import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
+import { createPublicClient, http } from "viem";
+import { sepolia } from "viem/chains";
+import { toMetaMaskSmartAccount, Implementation } from "@metamask/smart-accounts-kit";
 
 const ethereumAddress = z
   .string()
@@ -24,14 +27,20 @@ export const sessionRouter = createTRPCRouter({
       try {
         const normalized = input.userAddress.toLowerCase();
 
-        const existing = await ctx.db.query.sessionAccounts.findFirst({
-          where: and(
-            eq(sessionAccounts.userAddress, normalized),
-            eq(sessionAccounts.adapterId, input.adapterId)
-          ),
-        });
+        const existingRows = await ctx.db
+          .select()
+          .from(sessionAccounts)
+          .where(
+            and(
+              eq(sessionAccounts.userAddress, normalized),
+              eq(sessionAccounts.adapterId, input.adapterId)
+            )
+          )
+          .limit(1);
+        const existing = existingRows[0] || null;
 
         if (existing) {
+          // Return existing session (key already provisioned in enclave)
           return {
             address: existing.address,
             userAddress: existing.userAddress,
@@ -40,20 +49,60 @@ export const sessionRouter = createTRPCRouter({
           };
         }
 
-        const result = await sessionManager.createSession(
-          normalized as `0x${string}`,
-          input.adapterId,
-          ctx.enclaveClient
-        );
+        // Create session and provision key to enclave
+        const sessionAccountId = `session_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+        const privateKey = generatePrivateKey();
+        const account = privateKeyToAccount(privateKey);
+
+        const deployParams: [owner: `0x${string}`, keyIds: string[], xValues: bigint[], yValues: bigint[]] = [
+          account.address,
+          [],
+          [],
+          []
+        ];
+
+        // Compute smart account address
+        const publicClient = createPublicClient({
+          chain: sepolia,
+          transport: http(process.env.RPC_URL),
+        });
+
+        const smartAccount = await toMetaMaskSmartAccount({
+          client: publicClient,
+          implementation: Implementation.Hybrid,
+          deployParams,
+          deploySalt: "0x",
+          signer: { account },
+        });
+
+        console.log(`[SESSION] Provisioning key to enclave for session: ${sessionAccountId}`);
+        const provisionResult = await ctx.enclaveClient.provisionKey({
+          sessionAccountId,
+          privateKey,
+          userAddress: normalized as `0x${string}`,
+          adapterId: input.adapterId,
+          deployParams,
+        });
+
+        if (!provisionResult.success) {
+          throw new Error("Failed to provision key to enclave");
+        }
+
+        // Verify the smart account address matches
+        if (provisionResult.sessionAccountAddress.toLowerCase() !== smartAccount.address.toLowerCase()) {
+          throw new Error(
+            `Smart account address mismatch: expected ${smartAccount.address}, got ${provisionResult.sessionAccountAddress}`
+          );
+        }
 
         const [inserted] = await ctx.db
           .insert(sessionAccounts)
           .values({
-            sessionAccountId: result.sessionAccountId,
-            address: result.smartAccountAddress.toLowerCase(),
-            userAddress: result.userAddress,
-            adapterId: result.adapterId,
-            deployParams: result.deployParams,
+            sessionAccountId,
+            address: smartAccount.address.toLowerCase(),
+            userAddress: normalized,
+            adapterId: input.adapterId,
+            deployParams,
           })
           .returning();
 
@@ -103,17 +152,50 @@ export const sessionRouter = createTRPCRouter({
     .query(async ({ input, ctx }) => {
       const normalizedAddress = input.userAddress.toLowerCase();
 
-      const session = await ctx.db.query.sessionAccounts.findFirst({
-        where: and(
-          eq(sessionAccounts.userAddress, normalizedAddress),
-          eq(sessionAccounts.adapterId, input.adapterId)
-        ),
-      });
+      const sessionRows = await ctx.db
+        .select()
+        .from(sessionAccounts)
+        .where(
+          and(
+            eq(sessionAccounts.userAddress, normalizedAddress),
+            eq(sessionAccounts.adapterId, input.adapterId)
+          )
+        )
+        .limit(1);
+      const session = sessionRows[0] || null;
 
       if (!session) {
         throw new Error("Session not found");
       }
 
       return { sessionAddress: session.address };
+    }),
+
+  getBySessionAccountId: baseProcedure
+    .input(
+      z.object({
+        sessionAccountId: z.string().min(1),
+      })
+    )
+    .query(async ({ input, ctx }) => {
+      const sessionRows = await ctx.db
+        .select()
+        .from(sessionAccounts)
+        .where(eq(sessionAccounts.sessionAccountId, input.sessionAccountId))
+        .limit(1);
+      const session = sessionRows[0] || null;
+
+      if (!session) {
+        throw new Error("Session not found");
+      }
+
+      return {
+        sessionAccountId: session.sessionAccountId,
+        address: session.address,
+        userAddress: session.userAddress,
+        adapterId: session.adapterId,
+        deployParams: session.deployParams,
+        createdAt: session.createdAt.toISOString(),
+      };
     }),
 });

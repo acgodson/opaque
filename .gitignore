@@ -133,6 +133,17 @@ yarn.lock
 **/*.spec.ts
 **/*.spec.tsx
 
+# Development scripts (contain sensitive credentials)
+web/scripts/
+scripts/
+
+# Database migrations (generated/managed separately)
+migrations/
+
+# Test scripts
+test-enclave-execution.ts
+**/test-enclave-execution.ts
+
 # Documentation temp files
 **/*.md~
 **/*.md.backup

@@ -4,15 +4,21 @@ class DelegationService {
     environment = getDeleGatorEnvironment(11155111);
     async createTokenDelegation(params) {
         const { delegator, delegate, token, amount } = params;
+        const isNative = token === "0x0000000000000000000000000000000000000000";
         const delegation = createDelegation({
             from: delegator,
             to: delegate,
             environment: this.environment,
-            scope: {
-                type: "erc20TransferAmount",
-                tokenAddress: token,
-                maxAmount: amount,
-            },
+            scope: isNative
+                ? {
+                    type: "nativeTokenTransferAmount",
+                    maxAmount: amount,
+                }
+                : {
+                    type: "erc20TransferAmount",
+                    tokenAddress: token,
+                    maxAmount: amount,
+                },
         });
         const delegationHash = keccak256(encodePacked(["address", "address"], [delegation.delegator, delegation.delegate]));
         return {
