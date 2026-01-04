@@ -15,13 +15,11 @@ const ethereumAddress = z
   });
 
 export const adaptersRouter = createTRPCRouter({
-  // Get all adapter metadata (no DB, just registry)
   list: baseProcedure.query(async () => {
     const metadata = getAdapterMetadata();
     return { adapters: metadata };
   }),
 
-  // Get single adapter by ID (no DB, just registry)
   getById: baseProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ input }) => {
@@ -30,13 +28,11 @@ export const adaptersRouter = createTRPCRouter({
         throw new Error("Adapter not found");
       }
 
-      // Return metadata only (exclude internal functions)
       const { configSchema, proposeTransaction, validateConfig, ...metadata } =
         adapter;
       return { adapter: metadata };
     }),
 
-  // Install adapter for user
   install: baseProcedure
     .input(
       z.object({
@@ -53,45 +49,12 @@ export const adaptersRouter = createTRPCRouter({
           throw new Error("Adapter not found");
         }
 
-        // Validate config using adapter's validation
         if (!adapter.validateConfig(input.config)) {
           throw new Error("Invalid adapter configuration");
         }
 
         const normalizedAddress = input.userAddress.toLowerCase();
 
-        // Check if already installed
-        const existing = await ctx.db.query.installedAdapters.findFirst({
-          where: and(
-            eq(installedAdapters.userAddress, normalizedAddress),
-            eq(installedAdapters.adapterId, input.adapterId)
-          ),
-        });
-
-        if (existing) {
-          // Update existing adapter with new permission
-          const [updated] = await ctx.db
-            .update(installedAdapters)
-            .set({
-              config: input.config,
-              permissionId: input.permissionId,
-              isActive: true,
-            })
-            .where(eq(installedAdapters.id, existing.id))
-            .returning();
-
-          return {
-            installed: {
-              id: updated.id,
-              adapterId: updated.adapterId,
-              config: updated.config,
-              isActive: updated.isActive,
-              installedAt: updated.installedAt.toISOString(),
-            },
-          };
-        }
-
-        // Insert into DB
         const [inserted] = await ctx.db
           .insert(installedAdapters)
           .values({
@@ -118,36 +81,44 @@ export const adaptersRouter = createTRPCRouter({
       }
     }),
 
-  // List installed adapters for user
   listInstalled: baseProcedure
     .input(z.object({ userAddress: ethereumAddress }))
     .query(async ({ input, ctx }) => {
       const normalizedAddress = input.userAddress.toLowerCase();
 
-      const installed = await ctx.db.query.installedAdapters.findMany({
-        where: eq(installedAdapters.userAddress, normalizedAddress),
-      });
+      const installed = await ctx.db
+        .select()
+        .from(installedAdapters)
+        .where(eq(installedAdapters.userAddress, normalizedAddress));
 
       const result = await Promise.all(
         installed.map(async (i) => {
           const adapter = getAdapter(i.adapterId);
 
-          const session = await ctx.db.query.sessionAccounts.findFirst({
-            where: and(
-              eq(sessionAccounts.userAddress, normalizedAddress),
-              eq(sessionAccounts.adapterId, i.adapterId)
-            ),
-          });
+          const sessionRows = await ctx.db
+            .select()
+            .from(sessionAccounts)
+            .where(
+              and(
+                eq(sessionAccounts.userAddress, normalizedAddress),
+                eq(sessionAccounts.adapterId, i.adapterId)
+              )
+            );
 
           return {
             id: i.id,
             adapterId: i.adapterId,
             name: adapter?.name || i.adapterId,
             config: i.config,
+            permissionId: i.permissionId,
             isActive: i.isActive,
             lastRun: i.lastRun?.toISOString(),
             installedAt: i.installedAt.toISOString(),
-            sessionAddress: session?.address || null,
+            sessions: sessionRows.map((s) => ({
+              sessionAccountId: s.sessionAccountId,
+              address: s.address,
+              createdAt: s.createdAt.toISOString(),
+            })),
           };
         })
       );
@@ -155,13 +126,15 @@ export const adaptersRouter = createTRPCRouter({
       return { adapters: result };
     }),
 
-  // Toggle adapter active state
   toggle: baseProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input, ctx }) => {
-      const existing = await ctx.db.query.installedAdapters.findFirst({
-        where: eq(installedAdapters.id, input.id),
-      });
+      const existingRows = await ctx.db
+        .select()
+        .from(installedAdapters)
+        .where(eq(installedAdapters.id, input.id))
+        .limit(1);
+      const existing = existingRows[0] || null;
 
       if (!existing) {
         throw new Error("Installed adapter not found");

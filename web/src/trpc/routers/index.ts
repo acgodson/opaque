@@ -6,6 +6,7 @@ import { permissionsRouter } from './permissions';
 import { policiesRouter } from './policies';
 import { signalsRouter } from './signals';
 import { activityRouter } from './activity';
+import { envioRouter } from './envio';
 
 export const appRouter = createTRPCRouter({
   session: sessionRouter,
@@ -15,6 +16,7 @@ export const appRouter = createTRPCRouter({
   policies: policiesRouter,
   signals: signalsRouter,
   activity: activityRouter,
+  envio: envioRouter,
 
   health: baseProcedure.query(async () => {
     return {

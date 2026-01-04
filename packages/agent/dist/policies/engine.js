@@ -40,7 +40,10 @@ class PolicyEngine {
                 console.warn(`Unknown policy type: ${policy.policyType}`);
                 continue;
             }
-            const config = JSON.parse(policy.config);
+            // Handle both JSONB (already parsed object) and JSON string formats
+            const config = typeof policy.config === 'string'
+                ? JSON.parse(policy.config)
+                : policy.config;
             const result = await rule.evaluate(context, config);
             decisions.push(result);
             console.log(`Policy ${policy.policyType}: ${result.allowed ? "ALLOW" : "BLOCK"} - ${result.reason}`);

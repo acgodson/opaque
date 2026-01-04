@@ -29,6 +29,8 @@ export { gasLimitRule } from './policies/rules/gas-limit.js';
 export { timeWindowRule } from './policies/rules/time-window.js';
 export { maxAmountRule } from './policies/rules/max-amount.js';
 export { securityPauseRule } from './policies/rules/security-pause.js';
+export { recipientWhitelistRule } from './policies/rules/recipient-whitelist.js';
+export { cooldownRule } from './policies/rules/cooldown.js';
 
 export { gasSignal } from './signals/gas-signal.js';
 export { timeSignal } from './signals/time-signal.js';

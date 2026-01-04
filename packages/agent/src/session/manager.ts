@@ -1,17 +1,30 @@
-import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
+import { generatePrivateKey } from "viem/accounts";
 import { createPublicClient, http } from "viem";
 import { sepolia } from "viem/chains";
-import {
-  toMetaMaskSmartAccount,
-  Implementation,
-} from "@metamask/smart-accounts-kit";
-import { encrypt } from "../utils/crypto.js";
+
+export interface EnclaveClient {
+  provisionKey(request: {
+    sessionAccountId: string;
+    privateKey: `0x${string}`;
+    userAddress: `0x${string}`;
+    adapterId: string;
+    deployParams: [
+      owner: `0x${string}`,
+      keyIds: string[],
+      xValues: bigint[],
+      yValues: bigint[]
+    ];
+  }): Promise<{
+    success: boolean;
+    sessionAccountAddress: `0x${string}`;
+  }>;
+}
 
 export interface SessionAccount {
-  address: `0x${string}`;
+  sessionAccountId: string;
+  smartAccountAddress: `0x${string}`;
   userAddress: `0x${string}`;
   adapterId: string;
-  encryptedPrivateKey: string;
   deployParams: [
     owner: `0x${string}`,
     keyIds: string[],
@@ -28,28 +41,32 @@ class SessionManager {
 
   async createSession(
     userAddress: `0x${string}`,
-    adapterId: string
+    adapterId: string,
+    enclaveClient: EnclaveClient
   ): Promise<SessionAccount> {
     const normalizedUser = userAddress.toLowerCase() as `0x${string}`;
 
+    const sessionAccountId = `session_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+
     const privateKey = generatePrivateKey();
+    const { privateKeyToAccount } = await import("viem/accounts");
     const account = privateKeyToAccount(privateKey);
 
     const deployParams: [owner: `0x${string}`, keyIds: string[], xValues: bigint[], yValues: bigint[]] = [account.address, [], [], []];
 
-    const smartAccount = await toMetaMaskSmartAccount({
-      client: this.publicClient,
-      implementation: Implementation.Hybrid,
+    const result = await enclaveClient.provisionKey({
+      sessionAccountId,
+      privateKey,
+      userAddress: normalizedUser,
+      adapterId,
       deployParams,
-      deploySalt: "0x",
-      signer: { account },
     });
 
     return {
-      address: smartAccount.address,
+      sessionAccountId,
+      smartAccountAddress: result.sessionAccountAddress,
       userAddress: normalizedUser,
       adapterId,
-      encryptedPrivateKey: encrypt(privateKey),
       deployParams,
     };
   }

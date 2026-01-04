@@ -1,30 +1,30 @@
-import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
+import { generatePrivateKey } from "viem/accounts";
 import { createPublicClient, http } from "viem";
 import { sepolia } from "viem/chains";
-import { toMetaMaskSmartAccount, Implementation, } from "@metamask/smart-accounts-kit";
-import { encrypt } from "../utils/crypto.js";
 class SessionManager {
     publicClient = createPublicClient({
         chain: sepolia,
         transport: http(process.env.RPC_URL),
     });
-    async createSession(userAddress, adapterId) {
+    async createSession(userAddress, adapterId, enclaveClient) {
         const normalizedUser = userAddress.toLowerCase();
+        const sessionAccountId = `session_${Date.now()}_${Math.random().toString(36).substring(7)}`;
         const privateKey = generatePrivateKey();
+        const { privateKeyToAccount } = await import("viem/accounts");
         const account = privateKeyToAccount(privateKey);
         const deployParams = [account.address, [], [], []];
-        const smartAccount = await toMetaMaskSmartAccount({
-            client: this.publicClient,
-            implementation: Implementation.Hybrid,
-            deployParams,
-            deploySalt: "0x",
-            signer: { account },
-        });
-        return {
-            address: smartAccount.address,
+        const result = await enclaveClient.provisionKey({
+            sessionAccountId,
+            privateKey,
             userAddress: normalizedUser,
             adapterId,
-            encryptedPrivateKey: encrypt(privateKey),
+            deployParams,
+        });
+        return {
+            sessionAccountId,
+            smartAccountAddress: result.sessionAccountAddress,
+            userAddress: normalizedUser,
+            adapterId,
             deployParams,
         };
     }

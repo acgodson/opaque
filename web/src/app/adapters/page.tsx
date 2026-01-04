@@ -8,14 +8,14 @@ const AVAILABLE_ADAPTERS: Adapter[] = [
   {
     id: "transfer-bot",
     name: "Transfer Bot",
-    description: "Automate token transfers on a schedule with customizable policies for amount limits, time windows, and recipient whitelists",
+    description: "Transfers 0.1 USDC or 0.1 ETH per execution. Configure max amount per period (daily/weekly/monthly) with policies for spending limits and recipient whitelists.",
     category: "DeFi Automation",
     features: [
-      "Scheduled automatic transfers",
-      "Customizable spending limits",
-      "Time-based restrictions",
-      "Recipient whitelist support",
-      "Gas price optimization",
+      "0.1 USDC or 0.1 ETH per transfer",
+      "Max amount per period control",
+      "USDC and ETH support",
+      "Recipient whitelist",
+      "Period-based limits",
     ],
   },
   {
@@ -192,7 +192,7 @@ export default function AdaptersMarketplace() {
             and share them with the community.
           </p>
           <a
-            href="https://github.com/0xvisor/0xvisor"
+            href="https://github.com/acgodson/0xvisor"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-6 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-lg font-medium transition-colors"

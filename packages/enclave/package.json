@@ -1,0 +1,20 @@
+{
+  "name": "@0xvisor/enclave",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsup"
+  },
+  "dependencies": {
+    "@0xvisor/agent": "workspace:*",
+    "@metamask/smart-accounts-kit": "^0.3.0",
+    "permissionless": "^0.2.57",
+    "viem": "^2.21.54"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsup": "^8.5.1",
+    "typescript": "^5.0.0"
+  }
+}

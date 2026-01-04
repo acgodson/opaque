@@ -14,10 +14,16 @@ interface InstalledAdapter {
   id: number;
   adapterId: string;
   name: string;
-  icon: string;
+  config: any;
+  permissionId: number | null;
   isActive: boolean;
+  lastRun: string | null;
   installedAt: string;
-  lastRun?: string;
+  sessions: Array<{
+    sessionAccountId: string;
+    address: string;
+    createdAt: string;
+  }>;
 }
 
 export default function Dashboard() {
@@ -147,7 +153,6 @@ export default function Dashboard() {
         </div>
 
         <div className="space-y-6">
-          {/* Wallet Info & Signals */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
               <h3 className="text-lg font-semibold mb-4">Wallet Info</h3>
@@ -156,16 +161,6 @@ export default function Dashboard() {
                   <span className="text-zinc-400">Your Wallet:</span>
                   <span className="font-mono text-sm">{address?.slice(0, 10)}...{address?.slice(-8)}</span>
                 </div>
-                {sessionLoading ? (
-                  <div className="text-zinc-400 text-sm">Loading session...</div>
-                ) : session ? (
-                  <div className="flex justify-between items-center">
-                    <span className="text-zinc-400">Session Account:</span>
-                    <span className="font-mono text-sm">{session.address?.slice(0, 10)}...{session.address?.slice(-8)}</span>
-                  </div>
-                ) : (
-                  <div className="text-zinc-400 text-sm">No session found</div>
-                )}
               </div>
             </div>
 
@@ -287,13 +282,33 @@ export default function Dashboard() {
                           </span>
                         </div>
                       </div>
-                      <div className="flex items-center justify-between text-xs pt-2 border-t border-zinc-700">
-                        <span className="text-zinc-500">Session Account:</span>
-                        <span className="font-mono text-zinc-400">
-                          {adapter.sessionAddress ? `${adapter.sessionAddress.slice(0, 8)}...${adapter.sessionAddress.slice(-6)}` : 'No session'}
-                        </span>
-                      </div>
+                      {adapter.sessions && adapter.sessions.length > 0 && (
+                        <div className="pt-2 border-t border-zinc-700 space-y-2">
+                          <div className="text-xs text-zinc-500 mb-2">Session Accounts:</div>
+                          {adapter.sessions.map((session) => (
+                            <div key={session.sessionAccountId} className="flex items-center justify-between text-xs">
+                              <span className="text-zinc-400">Session:</span>
+                              <span className="font-mono text-zinc-300">
+                                {session.address.slice(0, 8)}...{session.address.slice(-6)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                       <div className="pt-2">
+                        <div className="flex items-center justify-between mb-2">
+                          <a
+                            href={`/api-explorer/${adapter.adapterId}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-xs font-medium transition-colors text-zinc-300 hover:text-white"
+                          >
+                            <span>View API</span>
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                          </a>
+                        </div>
                         <AdapterPlayground
                           adapterId={adapter.adapterId}
                           adapterName={adapter.name}
