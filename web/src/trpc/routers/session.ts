@@ -42,16 +42,17 @@ export const sessionRouter = createTRPCRouter({
 
         const result = await sessionManager.createSession(
           normalized as `0x${string}`,
-          input.adapterId
+          input.adapterId,
+          ctx.enclaveClient
         );
 
         const [inserted] = await ctx.db
           .insert(sessionAccounts)
           .values({
-            address: result.address.toLowerCase(),
+            sessionAccountId: result.sessionAccountId,
+            address: result.smartAccountAddress.toLowerCase(),
             userAddress: result.userAddress,
             adapterId: result.adapterId,
-            encryptedPrivateKey: result.encryptedPrivateKey,
             deployParams: result.deployParams,
           })
           .returning();

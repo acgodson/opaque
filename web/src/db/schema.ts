@@ -2,10 +2,10 @@ import { pgTable, serial, text, timestamp, boolean, jsonb, integer } from 'drizz
 
 export const sessionAccounts = pgTable('session_accounts', {
   id: serial('id').primaryKey(),
+  sessionAccountId: text('session_account_id').notNull().unique(),
   address: text('address').notNull().unique(),
   userAddress: text('user_address').notNull(),
   adapterId: text('adapter_id').notNull(),
-  encryptedPrivateKey: text('encrypted_private_key').notNull(),
   deployParams: jsonb('deploy_params').notNull(),
   createdAt: timestamp('created_at').notNull().defaultNow(),
 });

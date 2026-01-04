@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { createTRPCRouter, baseProcedure } from "../init";
-import { installedAdapters, permissions, sessionAccounts, executionLogs } from "../../db";
+import { installedAdapters, permissions, sessionAccounts, executionLogs, userPolicies } from "../../db";
 import { eq, and } from "drizzle-orm";
 import {
   executor,
@@ -177,13 +177,22 @@ export const executeRouter = createTRPCRouter({
 
         console.log("All policies passed - ALLOW");
 
-        // 9. Execute transaction with ERC-7710 delegation
+        // 9. Fetch policy rules and signals for enclave
+        const userPolicies = await ctx.db.query.userPolicies.findMany({
+          where: (policies: any, { eq, and }: any) =>
+            and(
+              eq(policies.userAddress, normalizedAddress),
+              eq(policies.isEnabled, true)
+            ),
+        });
+
+        // 10. Execute transaction with ERC-7710 delegation
         const result = await executor.executeAdapter({
           userAddress: normalizedAddress as `0x${string}`,
           adapter,
           session: {
-            address: session.address as `0x${string}`,
-            encryptedPrivateKey: session.encryptedPrivateKey,
+            sessionAccountId: session.sessionAccountId,
+            smartAccountAddress: session.address as `0x${string}`,
             deployParams: session.deployParams as any,
           },
           installedAdapterData: {
@@ -192,6 +201,13 @@ export const executeRouter = createTRPCRouter({
           },
           runtimeParams: input.runtimeParams,
           permissionDelegationData: permissionData,
+          enclaveClient: ctx.enclaveClient,
+          policyRules: userPolicies.map((p) => ({
+            type: p.policyType,
+            config: p.config,
+          })),
+          signals: {},
+          lastExecutionTime: lastExecution?.executedAt,
         });
 
         // 10. Update execution log with txHash if successful
