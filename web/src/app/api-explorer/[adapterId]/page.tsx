@@ -96,7 +96,7 @@ export default function AdapterAPIExplorer() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className="max-w-6xl mx-auto px-6 py-8 -mt-16">
         <div className="mb-6">
           <button
             onClick={() => router.push("/api-explorer")}

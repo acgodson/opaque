@@ -257,11 +257,11 @@ export default function APIExplorer() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-6 py-8 -mt-16">
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">API Explorer</h1>
           <p className="text-zinc-400">
-            Interactive API documentation and testing for 0xVisor tRPC endpoints
+            Interactive API documentation and testing for 0xVisor endpoints
           </p>
         </div>
 

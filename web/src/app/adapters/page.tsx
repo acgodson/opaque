@@ -3,13 +3,14 @@
 import { useState } from "react";
 import { AdapterCard, type Adapter } from "../../components/AdapterCard";
 import { useWallet } from "../../hooks/useWallet";
+import { OnboardingDialog } from "../../components/OnboardingDialog";
 
 const AVAILABLE_ADAPTERS: Adapter[] = [
   {
     id: "transfer-bot",
     name: "Transfer Bot",
     description: "Transfers 0.1 USDC or 0.1 ETH per execution. Configure max amount per period (daily/weekly/monthly) with policies for spending limits and recipient whitelists.",
-    category: "DeFi Automation",
+    category: "Payments & Transfers",
     features: [
       "0.1 USDC or 0.1 ETH per transfer",
       "Max amount per period control",
@@ -19,41 +20,16 @@ const AVAILABLE_ADAPTERS: Adapter[] = [
     ],
   },
   {
-    id: "swap-bot",
-    name: "Swap Bot",
-    description: "Automated token swaps with price targets and slippage protection",
-    category: "DeFi Automation",
+    id: "ai-savings-agent",
+    name: "AI Savings Agent",
+    description: "Automatically transfers funds to your savings vault or address on a schedule. Set your savings amount, frequency, and target address. Policies control spending limits and ensure funds only go to your trusted vault.",
+    category: "AI Automation",
     features: [
-      "Automated token swaps",
-      "Price target triggers",
-      "Slippage protection",
-      "Multi-DEX support",
-    ],
-    comingSoon: true,
-  },
-  {
-    id: "dca-bot",
-    name: "DCA Bot",
-    description: "Dollar-cost averaging strategy for consistent token accumulation",
-    category: "Investment Strategy",
-    features: [
-      "Recurring purchases",
-      "Flexible schedules",
-      "Multiple tokens support",
-      "Portfolio rebalancing",
-    ],
-    comingSoon: true,
-  },
-  {
-    id: "yield-optimizer",
-    name: "Yield Optimizer",
-    description: "Automatically move funds to highest-yielding protocols",
-    category: "Yield Farming",
-    features: [
-      "Auto-compound rewards",
-      "Protocol comparison",
-      "Gas-efficient swaps",
-      "Risk management",
+      "Automated savings transfers",
+      "Configurable amount per transfer",
+      "Flexible schedules (daily/weekly/monthly)",
+      "Savings vault/address targeting",
+      "Policy-controlled spending limits",
     ],
     comingSoon: true,
   },
@@ -75,8 +51,10 @@ export default function AdaptersMarketplace() {
   });
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="border-b border-zinc-800 bg-gradient-to-b from-zinc-900 to-black">
+    <>
+      <OnboardingDialog />
+      <div className="min-h-screen bg-black text-white">
+      <div className="border-b border-zinc-800 bg-gradient-to-b from-zinc-900 to-black -mt-16">
         <div className="max-w-7xl mx-auto px-6 py-12">
           <div className="max-w-3xl">
             <h1 className="text-4xl font-bold mb-3">
@@ -206,5 +184,6 @@ export default function AdaptersMarketplace() {
         </div>
       </div>
     </div>
+    </>
   );
 }

@@ -18,45 +18,43 @@ export function Navigation() {
           <div className="flex items-center gap-8">
             <button
               onClick={() => router.push("/")}
-              className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+              className="flex items-center hover:opacity-80 transition-opacity"
             >
-              <div className="text-2xl font-bold">
-                <span className="text-white">0x</span>
-                <span className="text-blue-500">Visor</span>
-              </div>
+              <img 
+                src="/0xvisor_transparent.png" 
+                alt="0xVisor" 
+                className="h-10 w-auto"
+              />
             </button>
 
             {/* Navigation Links */}
             <div className="hidden md:flex items-center gap-6">
               <button
                 onClick={() => router.push("/")}
-                className={`text-sm font-medium transition-colors ${
-                  isActive("/")
+                className={`text-sm font-medium transition-colors ${isActive("/")
                     ? "text-white"
                     : "text-zinc-400 hover:text-white"
-                }`}
+                  }`}
               >
                 Adapters
               </button>
               <button
                 onClick={() => router.push("/dashboard")}
-                className={`text-sm font-medium transition-colors ${
-                  isActive("/dashboard")
+                className={`text-sm font-medium transition-colors ${isActive("/dashboard")
                     ? "text-white"
                     : "text-zinc-400 hover:text-white"
-                }`}
+                  }`}
               >
                 Dashboard
               </button>
               <button
                 onClick={() => router.push("/api-explorer")}
-                className={`text-sm font-medium transition-colors ${
-                  isActive("/api-explorer")
+                className={`text-sm font-medium transition-colors ${isActive("/api-explorer")
                     ? "text-white"
                     : "text-zinc-400 hover:text-white"
-                }`}
+                  }`}
               >
-                API Explorer
+                API
               </button>
               <a
                 href="https://github.com/acgodson/0xvisor"
@@ -73,6 +71,9 @@ export function Navigation() {
           <div className="flex items-center gap-4">
             {isConnected ? (
               <div className="flex items-center gap-3">
+                <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded-lg">
+                  <span className="text-xs font-medium text-zinc-400">Sepolia</span>
+                </div>
                 <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg">
                   <div className="w-2 h-2 rounded-full bg-green-500"></div>
                   <span className="text-sm font-mono">

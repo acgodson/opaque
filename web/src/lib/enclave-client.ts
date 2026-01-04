@@ -240,23 +240,8 @@ class EnclaveClientImpl implements SessionEnclaveClient, ExecutorEnclaveClient {
       context: request.context,
     };
 
-    console.log("[ENCLAVE CLIENT] 🔍 Validating JSON...");
-
-    // Serialize and validate before sending
-    const serialized = this.serializeBigInt(enclaveRequest);
-    const jsonStr = JSON.stringify(serialized);
-
-    // Validate it's valid JSON
-    try {
-      JSON.parse(jsonStr);
-      console.log("[ENCLAVE CLIENT] ✅ JSON validation passed");
-    } catch (e) {
-      console.error("[ENCLAVE CLIENT] ❌ Invalid JSON:", e);
-      throw new Error(`Failed to serialize request: ${e}`);
-    }
-
     console.log("[ENCLAVE CLIENT] 📤 Sending request to enclave...");
-    const response = await this.sendRequest(serialized);
+    const response = await this.sendRequest(enclaveRequest);
     console.log("[ENCLAVE CLIENT] 📨 Received response from enclave");
 
     return {

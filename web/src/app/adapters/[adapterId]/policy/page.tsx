@@ -10,19 +10,14 @@ import { useTemplates } from "../../../../hooks/useTemplates";
 import { useWallet } from "../../../../hooks/useWallet";
 import { createEmptyPolicy, type PolicyFormState, type PolicyTemplate } from "../../../../types/policy";
 
-// Adapter info mapping
 const ADAPTER_INFO: Record<string, { name: string; description: string }> = {
   "transfer-bot": {
     name: "Transfer Bot",
     description: "Transfers 0.1 USDC or 0.1 ETH per execution. Configure max amount per period (daily/weekly/monthly) with policies.",
   },
-  "swap-bot": {
-    name: "Swap Bot",
-    description: "Automated token swaps",
-  },
-  "dca-bot": {
-    name: "DCA Bot",
-    description: "Dollar-cost averaging",
+  "ai-savings-agent": {
+    name: "AI Savings Agent",
+    description: "Automatically transfers funds to your savings vault or address on a schedule. Set your savings amount, frequency, and target address. Policies control spending limits and ensure funds only go to your trusted vault.",
   },
 };
 
@@ -82,7 +77,7 @@ export default function AdapterPolicyBuilder() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className="max-w-6xl mx-auto px-6 py-8 -mt-16">
         <div className="mb-6">
           <button
             onClick={() => router.push("/adapters")}

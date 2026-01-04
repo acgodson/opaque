@@ -50,7 +50,7 @@ export default function PolicyBuilderPage() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <div className="max-w-5xl mx-auto p-8">
+      <div className="max-w-5xl mx-auto p-8 -mt-16">
         <div className="mb-8">
           <button
             onClick={() => router.push("/")}
