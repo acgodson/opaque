@@ -7,7 +7,7 @@
 Unlike other automation apps that execute blindly once permissions are granted, 0xVisor evaluates every transaction against user-configured policies before execution.
 
 
-## 🎯 Problem Statement
+## Problem Statement
 
 MetaMask Advanced Permissions allows users to grant dApps the ability to execute transactions on their behalf. However, once a permission is granted, there's **zero runtime control**. The dApp can execute whenever it wants, at any gas price, for any amount up to the limit—with no guardrails.
 
@@ -32,7 +32,7 @@ MetaMask Advanced Permissions allows users to grant dApps the ability to execute
 | Component         | Technology       | Key Features                                                                                                                                                                                                                                                                                                                                                                         |
 | ----------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Frontend**      | Next.js          | Dashboard for managing adapters, policies, and monitoring<br>Permission grant flow with MetaMask integration<br>Real-time activity feed and signal status indicators<br>Policy configuration UI with DSL compiler<br>Interactive API Explorer with Envio integration                                                                                                                 |
-| **Backend Agent** | Node.js          | Session Manager: Creates session accounts, provisions keys to enclave (keys never stored in database)<br>Policy Engine: Evaluates transactions against user policies<br>Adapter Registry: Manages automation adapters (Transfer Bot, SwapBot, DCA Bot)<br>Executor: Orchestrates execution flow with offline enclave signing<br>Signal Fetcher: Aggregates gas, time, and Envio data |
+| **Backend Agent** | Node             | Session Manager: Creates session accounts, provisions keys to enclave (keys never stored in database)<br>Policy Engine: Evaluates transactions against user policies<br>Adapter Registry: Manages automation adapters (Transfer Bot, SwapBot, DCA Bot)<br>Executor: Orchestrates execution flow with offline enclave signing<br>Signal Fetcher: Aggregates gas, time, and Envio data |
 | **Enclave**       | Nitro Enclave    | Secure key storage in memory (private keys never leave enclave)<br>Offline transaction signing with policy validation<br>Policy evaluation with attestation<br>Isolated execution environment                                                                                                                                                                                        |
 | **Indexer**       | Envio HyperIndex | Monitors DelegationManager contract events<br>Anomaly detection and security alerts<br>Real-time Telegram notifications<br>GraphQL API for dashboard queries<br>tRPC endpoints for API Explorer integration                                                                                                                                                                          |
 
@@ -45,9 +45,11 @@ MetaMask Advanced Permissions allows users to grant dApps the ability to execute
 5. **Policy Engine evaluates** → Checks gas, time windows, amounts, security alerts, recipient whitelists
 6. **Enclave signs offline** → If policies pass, enclave signs UserOperation with stored private key
 7. **Transaction broadcasts** → Via Pimlico bundler to Sepolia
+   
 
+## Start-up
 
-## 🚀 Local Start-up
+> **Live Demo:** [0xvisor-web.vercel.app](https://0xvisor-web.vercel.app) | **Demo Video:** [Watch on YouTube](https://www.youtube.com/watch?v=TKKI5gv9lhs)
 
 ### Prerequisites
 
@@ -99,9 +101,6 @@ ENCLAVE_URL=http://enclave-proxy:8000
 # Envio
 ENVIO_GRAPHQL_URL=https://indexer.bigdevenergy.link/YOUR_ID/v1/graphql
 
-# Telegram (for alerts)
-TELEGRAM_BOT_TOKEN=your_bot_token
-TELEGRAM_CHAT_ID=your_chat_id
 ```
 
 ## Advanced Permissions Usage
@@ -109,6 +108,9 @@ TELEGRAM_CHAT_ID=your_chat_id
 0xVisor integrates ERC-7715 for both requesting permissions and redeeming them during execution.
 
 ### 1. Requesting Advanced Permissions
+
+
+![Session Accounts Permissions](slides/Screenshot%202026-01-05%20at%2004.03.33.png)
 
 When a user installs an adapter, they must grant permission for the session account to execute transactions on their behalf. This is done through MetaMask's `requestExecutionPermissions` API.
 
@@ -141,6 +143,8 @@ const permissions = await walletClient.requestExecutionPermissions([
 ]);
 ```
 
+
+
 **Supported Permission Types:**
 - `erc20-token-periodic`: For ERC20 tokens (e.g., USDC) with periodic spending limits
 - `native-token-periodic`: For native ETH transfers with periodic spending limits
@@ -157,6 +161,9 @@ const permissions = await walletClient.requestExecutionPermissions([
 - Permission UI: [`web/src/app/dashboard/page.tsx`](web/src/app/dashboard/page.tsx#L59-L98)
 
 ### 2. Redeeming Advanced Permissions
+
+
+![Envio Indexer Dashboard](slides/Screenshot%202026-01-05%20at%2004.01.58.png)
 
 When an adapter proposes a transaction and policies allow execution, 0xVisor redeems the permission by calling `redeemDelegations` on the DelegationManager contract. This is encoded as part of the UserOperation.
 
@@ -205,6 +212,9 @@ const redeemCallData = encodeFunctionData({
 - Test implementation: [`packages/agent/src/executor/test.ts`](packages/agent/src/executor/test.ts#L127-L153)
 
 ## Envio Usage
+
+![0xVisor Explorer](slides/Screenshot%202026-01-05%20at%2004.00.56.png)
+
 
 0xVisor uses Envio HyperIndex to monitor on-chain events from the MetaMask DelegationManager contract, enabling real-time anomaly detection, security alerts, and comprehensive activity tracking.
 
@@ -358,6 +368,9 @@ query EnvioSignalData {
 
 0xVisor uses AWS Nitro Enclaves to provide secure, isolated signing environments with complete key isolation:
 
+![AWS Nitro Enclave Running on EC2 Instance](slides/Screenshot%202026-01-05%20at%2003.59.24.png)
+
+
 **Offline Transaction Signing:**
 - UserOperations are sent to enclave for signing via HTTP proxy
 - Enclave validates policies before signing
@@ -471,8 +484,6 @@ Please share your thoughts & adapter idea request:
 **Twitter/X:** [@0xVisor](https://x.com/0xvisor) - Tag [@MetaMaskDev](https://x.com/MetaMaskDev)
 
 
-**Demo Video:** [Watch on YouTube](https://www.youtube.com/watch?v=TKKI5gv9lhs)
-**Live Demo:** [0xvisor-web.vercel.app](https://0xvisor-web.vercel.app)
 
 ---
 
