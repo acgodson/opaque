@@ -5,26 +5,10 @@ import { eq, and, isNull } from "drizzle-orm";
 import {
   getAllPolicyRules,
   getPolicyRule,
+  policyCompiler,
   policyTemplates,
   serializeBigInt,
 } from "@0xvisor/agent";
-
-let policyCompilerPromise: Promise<any> | null = null;
-async function getPolicyCompiler() {
-  if (!policyCompilerPromise) {
-    policyCompilerPromise = import("@0xvisor/agent").then((mod) => {
-      if (!mod.policyCompiler) {
-        throw new Error("policyCompiler not exported from @0xvisor/agent");
-      }
-      return mod.policyCompiler;
-    }).catch((error) => {
-      console.error("[ERROR] Failed to import policyCompiler:", error);
-      policyCompilerPromise = null;
-      throw new Error("Policy compiler is not available. Please ensure @0xvisor/agent is built.");
-    });
-  }
-  return policyCompilerPromise;
-}
 
 const ethereumAddress = z
   .string()
@@ -48,13 +32,11 @@ export const policiesRouter = createTRPCRouter({
     .input(z.any())
     .mutation(async ({ input }) => {
       try {
-        const compiler = await getPolicyCompiler();
-        
-        if (!compiler || typeof compiler.compile !== 'function') {
-          throw new Error("Policy compiler is not properly initialized.");
+        if (!policyCompiler || typeof policyCompiler.compile !== 'function') {
+          throw new Error("Policy compiler is not available. Please ensure @0xvisor/agent is built.");
         }
 
-        const compiled = compiler.compile(input);
+        const compiled = policyCompiler.compile(input);
 
         if (!compiled.valid) {
           throw new Error(
