@@ -1,6 +1,6 @@
 {
-  "name": "envio-indexer",
-  "version": "0.1.0",
+  "name": "@0xvisor/indexer",
+  "version": "0.0.2",
   "scripts": {
     "clean": "tsc --clean",
     "build": "tsc --build",
