@@ -48,6 +48,12 @@ export default function Dashboard() {
     },
   });
 
+  // Fetch root delegator count for monitoring dashboard
+  const rootDelegatorCount = trpc.envio.getRootDelegatorCount.useQuery(
+    undefined,
+    { refetchInterval: 30000 } 
+  );
+
   useEffect(() => {
     const stored = localStorage.getItem("compiledPolicy");
     if (stored) {
@@ -165,6 +171,27 @@ export default function Dashboard() {
             </div>
 
             <SignalStatusWidget />
+          </div>
+
+          {/* Monitoring Dashboard */}
+          <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
+            <h3 className="text-lg font-semibold mb-4">Monitoring Dashboard</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-4">
+                <div className="text-sm text-zinc-400 mb-2">Root Delegators</div>
+                <div className="text-3xl font-mono text-blue-400">
+                  {rootDelegatorCount.isLoading ? "..." : (rootDelegatorCount.data?.count || 0)}
+                </div>
+                <div className="text-xs text-zinc-500 mt-1">Unique delegators on-chain</div>
+              </div>
+              {rootDelegatorCount.error && (
+                <div className="md:col-span-2 p-3 bg-yellow-900/20 border border-yellow-800 rounded-lg">
+                  <p className="text-xs text-yellow-400">
+                    Indexer connection issue: {rootDelegatorCount.error.message}
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Permission Grant Section */}
