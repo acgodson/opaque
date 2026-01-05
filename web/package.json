@@ -5,8 +5,7 @@
   "scripts": {
     "dev": "next dev --webpack",
     "build": "pnpm --filter @0xvisor/agent build && next build --webpack",
-    "start": "next start",
-    "lint": "eslint"
+    "start": "next start"
   },
   "dependencies": {
     "@0xvisor/agent": "file:../packages/agent",

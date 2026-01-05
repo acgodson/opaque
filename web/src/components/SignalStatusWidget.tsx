@@ -93,43 +93,37 @@ export function SignalStatusWidget() {
               </span>
             </div>
 
-            {/* Envio Stats */}
-            {signals.envio.stats && (
-              <div className="grid grid-cols-3 gap-2 p-3 bg-zinc-800/30 rounded-lg">
+            {/* Root Delegator Count */}
+            {signals.envio.rootDelegatorCount !== undefined && (
+              <div className="p-3 bg-zinc-800/30 rounded-lg">
                 <div className="text-center">
-                  <div className="text-lg font-mono">{signals.envio.stats.totalRedemptions?.toString() || "0"}</div>
-                  <div className="text-xs text-zinc-500">Redemptions</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-mono">{signals.envio.stats.totalEnabled?.toString() || "0"}</div>
-                  <div className="text-xs text-zinc-500">Granted</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-mono">{signals.envio.stats.totalDisabled?.toString() || "0"}</div>
-                  <div className="text-xs text-zinc-500">Revoked</div>
+                  <div className="text-2xl font-mono text-blue-400">{signals.envio.rootDelegatorCount || 0}</div>
+                  <div className="text-xs text-zinc-500 mt-1">Unique Root Delegators</div>
                 </div>
               </div>
             )}
 
-            {signals.envio.alerts && signals.envio.alerts.length > 0 && (
-              <div className="p-3 bg-red-900/20 border border-red-800 rounded-lg">
+            {/* Redemption Spike Detection */}
+            {signals.envio.globalSpike && (
+              <div className={`p-3 rounded-lg border ${
+                signals.envio.globalSpike.spikeDetected
+                  ? "bg-red-900/20 border-red-800"
+                  : "bg-zinc-800/30 border-zinc-700"
+              }`}>
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                  <div className="text-red-400 font-medium text-sm">
-                    {signals.envio.alerts.length} Active Alert{signals.envio.alerts.length > 1 ? "s" : ""}
+                  <div className={`w-2 h-2 rounded-full ${
+                    signals.envio.globalSpike.spikeDetected ? "bg-red-500" : "bg-green-500"
+                  }`}></div>
+                  <div className={`font-medium text-sm ${
+                    signals.envio.globalSpike.spikeDetected ? "text-red-400" : "text-green-400"
+                  }`}>
+                    {signals.envio.globalSpike.spikeDetected ? "Spike Detected" : "Normal Activity"}
                   </div>
                 </div>
-                <div className="space-y-1">
-                  {signals.envio.alerts.slice(0, 3).map((alert: any, idx: number) => (
-                    <div key={idx} className="text-xs text-red-300">
-                      <span className="font-semibold uppercase">{alert.severity}:</span> {alert.message}
-                    </div>
-                  ))}
-                  {signals.envio.alerts.length > 3 && (
-                    <div className="text-xs text-red-400 mt-1">
-                      +{signals.envio.alerts.length - 3} more alerts
-                    </div>
-                  )}
+                <div className="text-xs text-zinc-400 space-y-1">
+                  <div>Current: {signals.envio.globalSpike.currentCount} redemptions</div>
+                  <div>Previous: {signals.envio.globalSpike.previousCount} redemptions</div>
+                  <div>Threshold: {signals.envio.globalSpike.threshold} ({signals.envio.globalSpike.timeWindowMinutes}min window)</div>
                 </div>
               </div>
             )}
@@ -160,3 +154,4 @@ export function SignalStatusWidget() {
     </div>
   );
 }
+

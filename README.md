@@ -6,6 +6,33 @@
 
 Unlike other automation apps that execute blindly once permissions are granted, 0xVisor evaluates every transaction against user-configured policies before execution.
 
+[![Demo Video](slides/demo-preview.png)](https://vimeo.com/1151662393)
+
+## Table of Contents
+
+- [0xVisor](#0xvisor)
+  - [Table of Contents](#table-of-contents)
+  - [Problem Statement](#problem-statement)
+  - [🏗️ Architecture](#️-architecture)
+    - [The Three Pillars](#the-three-pillars)
+    - [Execution Flow](#execution-flow)
+  - [Advanced Permissions Usage](#advanced-permissions-usage)
+    - [1. Requesting Advanced Permissions](#1-requesting-advanced-permissions)
+    - [2. Redeeming Advanced Permissions](#2-redeeming-advanced-permissions)
+  - [Envio Usage](#envio-usage)
+    - [How We Use Envio](#how-we-use-envio)
+    - [Code Locations](#code-locations)
+    - [GraphQL Queries](#graphql-queries)
+  - [Security Architecture](#security-architecture)
+    - [Enclave-Based Offline Signing](#enclave-based-offline-signing)
+    - [Policy Evaluation](#policy-evaluation)
+  - [Adapter Samples](#adapter-samples)
+    - [Transfer Bot](#transfer-bot)
+  - [Policy DSL](#policy-dsl)
+  - [📝 Feedback](#-feedback)
+    - [Known Issues \& Future Improvements](#known-issues--future-improvements)
+    - [Hackathon Experience](#hackathon-experience)
+  - [Social Media](#social-media)
 
 ## Problem Statement
 
@@ -27,15 +54,6 @@ MetaMask Advanced Permissions allows users to grant dApps the ability to execute
 | **Policies** | Define safety rules     | **WHEN** is it safe to execute?     |
 | **Signals**  | Provide external data   | **WITH WHAT** context do we decide? |
 
-### System Components
-
-| Component         | Technology       | Key Features                                                                                                                                                                                                                                                                                                                                                                         |
-| ----------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Frontend**      | Next.js          | Dashboard for managing adapters, policies, and monitoring<br>Permission grant flow with MetaMask integration<br>Real-time activity feed and signal status indicators<br>Policy configuration UI with DSL compiler<br>Interactive API Explorer with Envio integration                                                                                                                 |
-| **Backend Agent** | Node             | Session Manager: Creates session accounts, provisions keys to enclave (keys never stored in database)<br>Policy Engine: Evaluates transactions against user policies<br>Adapter Registry: Manages automation adapters (Transfer Bot, SwapBot, DCA Bot)<br>Executor: Orchestrates execution flow with offline enclave signing<br>Signal Fetcher: Aggregates gas, time, and Envio data |
-| **Enclave**       | Nitro Enclave    | Secure key storage in memory (private keys never leave enclave)<br>Offline transaction signing with policy validation<br>Policy evaluation with attestation<br>Isolated execution environment                                                                                                                                                                                        |
-| **Indexer**       | Envio HyperIndex | Monitors DelegationManager contract events<br>Anomaly detection and security alerts<br>Real-time Telegram notifications<br>GraphQL API for dashboard queries<br>tRPC endpoints for API Explorer integration                                                                                                                                                                          |
-
 ### Execution Flow
 
 1. **User installs adapter** → Configures automation (e.g., transfer bot with USDC or ETH)
@@ -46,63 +64,6 @@ MetaMask Advanced Permissions allows users to grant dApps the ability to execute
 6. **Enclave signs offline** → If policies pass, enclave signs UserOperation with stored private key
 7. **Transaction broadcasts** → Via Pimlico bundler to Sepolia
    
-
-## Start-up
-
-> **Live Demo:** [0xvisor-web.vercel.app](https://0xvisor-web.vercel.app) | **Demo Video:** [Watch on YouTube](https://www.youtube.com/watch?v=TKKI5gv9lhs)
-
-### Prerequisites
-
-- Node.js 20+
-- pnpm
-- Docker (for local Postgres)
-- MetaMask snap wallet with Sepolia testnet configured
-
-### Installation
-
-```bash
-# Clone repository
-git clone https://github.com/acgodson/0xvisor.git
-cd 0xvisor
-
-# Install dependencies
-pnpm install
-
-# Set up environment variables
-cp .env.example .env
-# Edit .env with your keys (see Environment Variables section)
-pnpm build
-
-# Start local Postgres
-docker-compose up -d
-
-# Run database migrations
-
-cd web
-pnpm drizzle-kit push
-
-# Start development servers
-pnpm dev:web    # Frontend on http://localhost:3000
-```
-
-### Environment Variables
-
-```bash
-# RPC & Bundler
-RPC_URL=https://sepolia.infura.io/v3/YOUR_KEY
-BUNDLER_URL=https://api.pimlico.io/v1/sepolia/rpc?apikey=YOUR_KEY
-
-# Database
-POSTGRES_URL=postgresql://postgres:postgres@localhost:5432/0xvisor
-
-#  Nitro Enclave
-ENCLAVE_URL=http://enclave-proxy:8000
-
-# Envio
-ENVIO_GRAPHQL_URL=https://indexer.bigdevenergy.link/YOUR_ID/v1/graphql
-
-```
-
 ## Advanced Permissions Usage
 
 0xVisor integrates ERC-7715 for both requesting permissions and redeeming them during execution.
@@ -216,30 +177,33 @@ const redeemCallData = encodeFunctionData({
 ![0xVisor Explorer](slides/Screenshot%202026-01-05%20at%2004.00.56.png)
 
 
-0xVisor uses Envio HyperIndex to monitor on-chain events from the MetaMask DelegationManager contract, enabling real-time anomaly detection, security alerts, and comprehensive activity tracking.
+0xVisor uses Envio HyperIndex to monitor on-chain events from the MetaMask DelegationManager contract, enabling real-time anomaly detection (redemption spike detection), monitoring dashboards, and comprehensive activity tracking.
 
 ### How We Use Envio
 
 **1. Event Indexing**
-- Monitors `RedeemedDelegation`, `EnabledDelegation`, and `DisabledDelegation` events
-- Stores events with full context (block number, timestamp, transaction hash, addresses)
-- Maintains global and per-user statistics
+- Monitors `RedeemedDelegation` events from the MetaMask DelegationManager contract
+- Stores redemption events with full context (block number, timestamp, transaction hash, rootDelegator, redeemer)
+- Tracks unique root delegators for monitoring dashboard
 
-**2. Anomaly Detection**
-- Detects unusual redemption frequency (global >10/hour, per-user >5/hour)
-- Creates security alerts that feed into the Security Pause policy
-- Triggers automatic execution blocking when thresholds are exceeded
+**2. Anomaly Detection (Redemption Spike Detection)**
+- Detects unusual redemption frequency by comparing current vs previous time windows
+- Configurable thresholds (default: 2x multiplier) for global and user-specific spikes
+- Feeds into the Security Pause policy to block execution when spikes are detected
+- Supports both global monitoring and per-user spike detection
 
 **3. Real-Time Monitoring**
-- Sends Telegram alerts for new redemption events
 - Provides GraphQL API for dashboard queries
-- Tracks delegation lifecycle (enabled, redeemed, disabled)
-- **API Explorer Integration**: Query redemption counts, history, and stats via tRPC endpoints
+- **Monitoring Dashboard**: Displays unique root delegator count
+- **Adapter Explorer**: Shows session account redemption activity within time windows
+- **API Explorer Integration**: Query redemption counts, history, and spike detection via tRPC endpoints
 
 **4. Policy Integration**
-- Security Pause policy queries Envio for active alerts
-- Blocks execution when anomalies are detected
-- Provides context for policy decisions
+- Security Pause policy: [`packages/agent/src/policies/rules/security-pause.ts`](packages/agent/src/policies/rules/security-pause.ts#L3-L90)
+  - Queries Envio signal for anomaly detection (redemption spikes) - [`packages/agent/src/policies/rules/security-pause.ts#L29-L45`](packages/agent/src/policies/rules/security-pause.ts#L29-L45)
+  - Blocks execution when spikes exceed configured thresholds - [`packages/agent/src/policies/rules/security-pause.ts#L47-L65`](packages/agent/src/policies/rules/security-pause.ts#L47-L65)
+  - Supports global and user-specific spike detection with configurable thresholds
+  - Provides context for policy decisions with configurable time windows and multipliers
 
 ### Code Locations
 
@@ -249,118 +213,179 @@ const redeemCallData = encodeFunctionData({
 
 **API Integration:**
 - Envio router: [`web/src/trpc/routers/envio.ts`](web/src/trpc/routers/envio.ts)
+  - All queries use `blockTimestamp` field (not `timestamp`) and `numeric!` type for time comparisons
+  - Uses `order_by: {blockNumber: desc}` for sorting (works with deployed schema)
 - API Explorer: [`web/src/app/api-explorer/page.tsx`](web/src/app/api-explorer/page.tsx)
+  - Lists all available Envio endpoints with examples
+- Adapter API Explorer: [`web/src/app/api-explorer/[adapterId]/page.tsx`](web/src/app/api-explorer/[adapterId]/page.tsx#L370-L425)
+  - Shows Envio query examples using user account and session addresses
+  - Displays real-time redemption stats and session account activity
 - Available endpoints:
-  - `envio.getStats` - Global on-chain statistics
-  - `envio.getUserRedemptionCount` - Total redemptions for a user
-  - `envio.getUserRedemptions` - Detailed redemption history
-  - `envio.getRecentRedemptions` - Recent redemptions across all users
-  - `envio.getDelegationHistory` - Full delegation lifecycle
-  - `envio.getSecurityAlerts` - Security alerts from anomaly detection
+  - `envio.getRootDelegatorCount` - Count of unique root delegators (for monitoring dashboard) - [`web/src/trpc/routers/envio.ts#L37-L54`](web/src/trpc/routers/envio.ts#L37-L54)
+  - `envio.getUserRedemptionCount` - Total redemptions for a user - [`web/src/trpc/routers/envio.ts#L259-L284`](web/src/trpc/routers/envio.ts#L259-L284)
+  - `envio.getUserRedemptions` - Detailed redemption history for a user - [`web/src/trpc/routers/envio.ts#L224-L257`](web/src/trpc/routers/envio.ts#L224-L257)
+  - `envio.getRecentRedemptions` - Recent redemptions across all users - [`web/src/trpc/routers/envio.ts#L200-L222`](web/src/trpc/routers/envio.ts#L200-L222)
+  - `envio.getSessionAccountRedemptions` - Redemptions by session account (redeemer) within time window - [`web/src/trpc/routers/envio.ts#L56-L96`](web/src/trpc/routers/envio.ts#L56-L96)
+  - `envio.getRedemptionSpike` - Anomaly detection: detect redemption spikes over time periods (for signal policy) - [`web/src/trpc/routers/envio.ts#L98-L197`](web/src/trpc/routers/envio.ts#L98-L197)
 
-**Anomaly Detection:**
+**Anomaly Detection (Redemption Spike Detection):**
 ```typescript
-// packages/indexer/src/EventHandlers.ts#L32-L103
-async function checkRedemptionAnomalies(event: any, context: any) {
-  // Check global frequency
-  const globalStats = await context.Stats.get("global");
-  const recentRedemptions = await context.Redemption.findMany({
-    where: {
-      timestamp: {
-        gte: BigInt(Date.now() / 1000 - 3600), // Last hour
-      },
-    },
-  });
+// web/src/trpc/routers/envio.ts#L98-L197
+getRedemptionSpike: baseProcedure
+  .input(
+    z.object({
+      timeWindowMinutes: z.number().min(1).max(1440).default(60),
+      thresholdMultiplier: z.number().min(1).default(2),
+      globalThreshold: z.number().optional(),
+      userAddress: ethereumAddress.optional(),
+    })
+  )
+  .query(async ({ input }) => {
+    // Detect redemption spikes over time period
+    const timeWindowSeconds = input.timeWindowMinutes * 60;
+    const now = Math.floor(Date.now() / 1000);
+    const since = now - timeWindowSeconds;
+    const previousWindowSince = now - (timeWindowSeconds * 2);
 
-  if (recentRedemptions.length > 10) {
-    // Create security alert
-    await context.SecurityAlert.create({
-      alertType: "high_redemption_frequency",
-      severity: "high",
-      message: "Unusual redemption frequency detected",
-      // ...
-    });
-  }
-}
+    // Query current and previous time windows
+    // Uses blockTimestamp field with numeric! type (not BigInt!)
+    const [currentData, previousData] = await Promise.all([
+      queryEnvio(/* current window query with blockTimestamp */),
+      queryEnvio(/* previous window query with blockTimestamp */),
+    ]);
+
+    const currentCount = currentData.Redemption?.length || 0;
+    const previousCount = previousData.Redemption?.length || 0;
+    const average = previousCount > 0 ? previousCount : 1;
+    const spikeDetected = currentCount >= average * input.thresholdMultiplier;
+    
+    return {
+      currentCount,
+      previousCount,
+      spikeDetected,
+      threshold: Math.ceil(average * input.thresholdMultiplier),
+      timeWindowMinutes: input.timeWindowMinutes,
+      isGlobal: !input.userAddress,
+    };
+  })
 ```
 
 **Event Handlers:**
 ```typescript
-// packages/indexer/src/EventHandlers.ts#L105-L142
-DelegationManager.RedeemedDelegation.handler(async ({ event, context }: any) => {
-  // Store redemption event
-  await context.Redemption.create({
-    id: `${event.transaction.hash}-${event.logIndex}`,
-    rootDelegator: event.params.rootDelegator,
-    redeemer: event.params.redeemer,
-    delegationHash: event.params.delegationHash,
+// packages/indexer/src/EventHandlers.ts#L3-L22
+DelegationManager.RedeemedDelegation.handler(async ({ event, context }) => {
+  const rootDelegator = event.params.rootDelegator;
+  const redeemer = event.params.redeemer;
+  
+  const transactionHash = (event.transaction as any).hash || event.block.hash;
+  const id = `${transactionHash}-${event.logIndex}`;
+
+  const redemptionEntity = {
+    id,
+    rootDelegator: rootDelegator.toLowerCase(),
+    redeemer: redeemer.toLowerCase(),
+    delegationHash: undefined, 
     blockNumber: BigInt(event.block.number),
-    timestamp: BigInt(event.block.timestamp),
-    transactionHash: event.transaction.hash,
-  });
+    blockTimestamp: BigInt(event.block.timestamp),
+    transactionHash: transactionHash.toLowerCase(),
+    logIndex: BigInt(event.logIndex),
+  };
 
-  // Update global stats
-  const stats = await context.Stats.get("global");
-  await context.Stats.set({
-    id: "global",
-    totalRedemptions: (stats?.totalRedemptions || 0n) + 1n,
-    // ...
-  });
-
-  // Check for anomalies
-  await checkRedemptionAnomalies(event, context);
-
-  // Send Telegram alert for new events
-  if (event.block.timestamp > INDEXER_START_TIME) {
-    await sendTelegramAlert(/* ... */);
-  }
+  context.Redemption.set(redemptionEntity);
 });
 ```
 
+**Note:** The  indexer only tracks `RedeemedDelegation` events. Spike detection and monitoring are handled via GraphQL queries in the web application and agent signal fetcher.
+
 **Signal Integration:**
-- Envio signal fetcher: [`packages/agent/src/signals/envio-signal.ts`](packages/agent/src/signals/envio-signal.ts)
-- GraphQL queries: [`packages/agent/src/signals/envio-signal.ts`](packages/agent/src/signals/envio-signal.ts#L21-L52)
+- Envio signal fetcher: [`packages/agent/src/signals/envio-signal.ts`](packages/agent/src/signals/envio-signal.ts#L15-L126)
+  - Fetches recent redemptions using `order_by: {blockTimestamp: desc}` - [`packages/agent/src/signals/envio-signal.ts#L35-L48`](packages/agent/src/signals/envio-signal.ts#L35-L48)
+  - Performs anomaly detection (redemption spike detection) by comparing current vs previous hour - [`packages/agent/src/signals/envio-signal.ts#L52-L90`](packages/agent/src/signals/envio-signal.ts#L52-L90)
+  - Uses `blockTimestamp` field with `BigInt!` type (works in agent signal, but tRPC router uses `numeric!`)
+  - Compares current hour vs previous hour to detect 2x threshold spikes
+  - Provides spike data to Security Pause policy for execution blocking
 
 **Dashboard Integration:**
-- Signal status widget: [`web/src/components/SignalStatusWidget.tsx`](web/src/components/SignalStatusWidget.tsx#L73-L113)
-- Displays Envio connection status, redemption stats, and active alerts
+- Signal status widget: [`web/src/components/SignalStatusWidget.tsx`](web/src/components/SignalStatusWidget.tsx#L73-L154)
+  - Displays Envio connection status, unique root delegator count, and anomaly detection (redemption spike status)
+  - Shows root delegator count from `signals.envio.rootDelegatorCount` - [`web/src/components/SignalStatusWidget.tsx#L97-L104`](web/src/components/SignalStatusWidget.tsx#L97-L104)
+  - Displays redemption spike detection status - [`web/src/components/SignalStatusWidget.tsx#L107-L129`](web/src/components/SignalStatusWidget.tsx#L107-L129)
+- Monitoring dashboard: [`web/src/app/dashboard/page.tsx`](web/src/app/dashboard/page.tsx#L176-L195)
+  - Shows root delegator count for system-wide monitoring using `envio.getRootDelegatorCount` - [`web/src/app/dashboard/page.tsx#L179-L190`](web/src/app/dashboard/page.tsx#L179-L190)
+- Adapter explorer: [`web/src/app/api-explorer/[adapterId]/page.tsx`](web/src/app/api-explorer/[adapterId]/page.tsx)
+  - Displays session account redemption activity within configurable time windows
+  - Uses `envio.getUserRedemptionCount` for user stats - [`web/src/app/api-explorer/[adapterId]/page.tsx#L31-L34`](web/src/app/api-explorer/[adapterId]/page.tsx#L31-L34)
+  - Uses `envio.getSessionAccountRedemptions` for session account activity - [`web/src/app/api-explorer/[adapterId]/page.tsx#L42-L48`](web/src/app/api-explorer/[adapterId]/page.tsx#L42-L48)
+  - Shows Envio query examples using user account and session addresses - [`web/src/app/api-explorer/[adapterId]/page.tsx#L370-L425`](web/src/app/api-explorer/[adapterId]/page.tsx#L370-L425)
 
 ### GraphQL Queries
 
-The indexer exposes a GraphQL API for querying events and statistics:
+The indexer exposes a GraphQL API for querying redemption events. The schema includes:
 
 ```graphql
-query EnvioSignalData {
-  Redemption(limit: 50, order_by: {timestamp: desc}) {
+type Redemption {
+  id: ID!
+  rootDelegator: String!
+  redeemer: String!
+  delegationHash: String
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: String!
+  logIndex: BigInt!
+}
+```
+
+**Example Queries:**
+
+```graphql
+# Get recent redemptions
+query GetRecentRedemptions($limit: Int!) {
+  Redemption(
+    limit: $limit
+    order_by: {blockNumber: desc}
+  ) {
     id
     rootDelegator
     redeemer
-    delegationHash
     blockNumber
-    timestamp
+    blockTimestamp
     transactionHash
   }
-  SecurityAlert(
-    where: {isActive: {_eq: true}}
-    order_by: {createdAt: desc}
+}
+
+# Get redemptions by redeemer (session account) within time window
+query GetSessionAccountRedemptions($redeemer: String!, $since: numeric!) {
+  Redemption(
+    where: {redeemer: {_eq: $redeemer}, blockTimestamp: {_gte: $since}}
+    order_by: {blockNumber: desc}
   ) {
     id
-    alertType
-    severity
-    message
-    userAddress
-    triggerCount
-    createdAt
-    metadata
+    rootDelegator
+    redeemer
+    blockNumber
+    blockTimestamp
+    transactionHash
   }
-  Stats(where: {id: {_eq: "global"}}) {
-    totalRedemptions
-    totalEnabled
-    totalDisabled
-    lastUpdated
+}
+
+# Get redemptions for anomaly detection (spike detection)
+query GetRedemptionSpike($since: numeric!, $previousSince: numeric!) {
+  current: Redemption(
+    where: {blockTimestamp: {_gte: $since}}
+  ) {
+    id
+    blockTimestamp
+  }
+  previous: Redemption(
+    where: {blockTimestamp: {_gte: $previousSince, _lt: $since}}
+  ) {
+    id
+    blockTimestamp
   }
 }
 ```
+
+**Note:** The streamlined indexer only tracks `RedeemedDelegation` events. All queries are performed via the GraphQL API, and anomaly detection (redemption spike detection) is computed by comparing time windows in the application layer.
 
 ## Security Architecture
 
@@ -389,7 +414,7 @@ Policies are evaluated in sequence before any transaction execution:
 1. **Gas Limit Policy** - Blocks execution when gas prices exceed threshold
 2. **Time Window Policy** - Only allows execution during specified hours/days
 3. **Max Amount Policy** - Limits transaction size
-4. **Security Pause Policy** - Blocks execution when Envio detects anomalies
+4. **Security Pause Policy** - Blocks execution when Envio anomaly detection detects redemption spikes (configurable thresholds and time windows)
 
 **Code Location:** [`packages/agent/src/policies/engine.ts`](packages/agent/src/policies/engine.ts)
 

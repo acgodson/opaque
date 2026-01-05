@@ -34,23 +34,168 @@ async function queryEnvio(query: string, variables?: Record<string, any>) {
 }
 
 export const envioRouter = createTRPCRouter({
-  getStats: baseProcedure.query(async () => {
+  getRootDelegatorCount: baseProcedure.query(async () => {
+    // Count unique rootDelegators for monitoring dashboard
     const data = await queryEnvio(`
-      query GetStats {
-        Stats(where: {id: {_eq: "global"}}) {
-          id
-          totalRedemptions
-          totalEnabled
-          totalDisabled
-          lastUpdated
+      query GetRootDelegatorCount {
+        Redemption {
+          rootDelegator
         }
       }
     `);
 
+    const uniqueDelegators = new Set(
+      (data.Redemption || []).map((r: any) => r.rootDelegator.toLowerCase())
+    );
+
     return {
-      stats: data.Stats?.[0] || null,
+      count: uniqueDelegators.size,
     };
   }),
+
+  getSessionAccountRedemptions: baseProcedure
+    .input(
+      z.object({
+        sessionAccountAddress: ethereumAddress,
+        timeWindowHours: z.number().optional().default(24),
+      })
+    )
+    .query(async ({ input }) => {
+      // Count redemptions by redeemer (session account) within time window
+      const timeWindowSeconds = input.timeWindowHours * 3600;
+      const now = Math.floor(Date.now() / 1000);
+      const since = now - timeWindowSeconds;
+
+      const data = await queryEnvio(
+        `
+        query GetSessionAccountRedemptions($redeemer: String!, $since: numeric!) {
+          Redemption(
+            where: {redeemer: {_eq: $redeemer}, blockTimestamp: {_gte: $since}}
+            order_by: {blockNumber: desc}
+          ) {
+            id
+            rootDelegator
+            redeemer
+            blockNumber
+            blockTimestamp
+            transactionHash
+          }
+        }
+      `,
+        {
+          redeemer: input.sessionAccountAddress.toLowerCase(),
+          since: since.toString(),
+        }
+      );
+
+      return {
+        redemptions: data.Redemption || [],
+        count: data.Redemption?.length || 0,
+        timeWindowHours: input.timeWindowHours,
+      };
+    }),
+
+  getRedemptionSpike: baseProcedure
+    .input(
+      z.object({
+        timeWindowMinutes: z.number().min(1).max(1440).default(60),
+        thresholdMultiplier: z.number().min(1).default(2),
+        globalThreshold: z.number().optional(),
+        userAddress: ethereumAddress.optional(),
+      })
+    )
+    .query(async ({ input }) => {
+      // Detect redemption spikes over time period
+      const timeWindowSeconds = input.timeWindowMinutes * 60;
+      const now = Math.floor(Date.now() / 1000);
+      const since = now - timeWindowSeconds;
+      const previousWindowSince = now - (timeWindowSeconds * 2);
+
+      const variables: any = {
+        since: since.toString(),
+        previousSince: previousWindowSince.toString(),
+      };
+
+      if (input.userAddress) {
+        variables.userAddress = input.userAddress.toLowerCase();
+      }
+
+      const currentVariables = input.userAddress
+        ? { userAddress: variables.userAddress, since: variables.since }
+        : { since: variables.since };
+
+      const previousVariables = input.userAddress
+        ? { userAddress: variables.userAddress, previousSince: variables.previousSince, since: variables.since }
+        : { previousSince: variables.previousSince, since: variables.since };
+
+      const [currentData, previousData] = await Promise.all([
+        queryEnvio(
+          input.userAddress
+            ? `
+            query GetCurrentRedemptions($userAddress: String!, $since: numeric!) {
+              Redemption(
+                where: {rootDelegator: {_eq: $userAddress}, blockTimestamp: {_gte: $since}}
+              ) {
+                id
+                blockTimestamp
+              }
+            }
+          `
+            : `
+            query GetCurrentRedemptions($since: numeric!) {
+              Redemption(
+                where: {blockTimestamp: {_gte: $since}}
+              ) {
+                id
+                blockTimestamp
+              }
+            }
+          `,
+          currentVariables
+        ),
+        queryEnvio(
+          input.userAddress
+            ? `
+            query GetPreviousRedemptions($userAddress: String!, $previousSince: numeric!, $since: numeric!) {
+              Redemption(
+                where: {rootDelegator: {_eq: $userAddress}, blockTimestamp: {_gte: $previousSince, _lt: $since}}
+              ) {
+                id
+                blockTimestamp
+              }
+            }
+          `
+            : `
+            query GetPreviousRedemptions($previousSince: numeric!, $since: numeric!) {
+              Redemption(
+                where: {blockTimestamp: {_gte: $previousSince, _lt: $since}}
+              ) {
+                id
+                blockTimestamp
+              }
+            }
+          `,
+          previousVariables
+        ),
+      ]);
+
+      const currentCount = currentData.Redemption?.length || 0;
+      const previousCount = previousData.Redemption?.length || 0;
+      const average = previousCount > 0 ? previousCount : 1;
+      const spikeDetected = currentCount >= average * input.thresholdMultiplier;
+      const spikeDetectedByThreshold =
+        input.globalThreshold !== undefined &&
+        currentCount >= input.globalThreshold;
+
+      return {
+        currentCount,
+        previousCount,
+        spikeDetected: spikeDetected || spikeDetectedByThreshold,
+        threshold: Math.ceil(average * input.thresholdMultiplier),
+        timeWindowMinutes: input.timeWindowMinutes,
+        isGlobal: !input.userAddress,
+      };
+    }),
 
   getRecentRedemptions: baseProcedure
     .input(
@@ -64,14 +209,14 @@ export const envioRouter = createTRPCRouter({
         query GetRecentRedemptions($limit: Int!) {
           Redemption(
             limit: $limit
-            order_by: {timestamp: desc}
+            order_by: {blockNumber: desc}
           ) {
             id
             rootDelegator
             redeemer
             delegationHash
             blockNumber
-            timestamp
+            blockTimestamp
             transactionHash
           }
         }
@@ -98,14 +243,14 @@ export const envioRouter = createTRPCRouter({
           Redemption(
             where: {rootDelegator: {_eq: $address}}
             limit: $limit
-            order_by: {timestamp: desc}
+            order_by: {blockNumber: desc}
           ) {
             id
             rootDelegator
             redeemer
             delegationHash
             blockNumber
-            timestamp
+            blockTimestamp
             transactionHash
           }
         }
@@ -128,145 +273,23 @@ export const envioRouter = createTRPCRouter({
     .query(async ({ input }) => {
       const address = input.userAddress.toLowerCase();
       
-      const [redemptions, transfers] = await Promise.all([
-        queryEnvio(
-          `
-          query GetUserRedemptions($address: String!) {
-            Redemption(
-              where: {rootDelegator: {_eq: $address}}
-            ) {
-              id
-            }
-          }
-        `,
-          { address }
-        ),
-        queryEnvio(
-          `
-          query GetUserTransfers($address: String!) {
-            TransferInPeriod(
-              where: {sender: {_eq: $address}}
-            ) {
-              id
-            }
-          }
-        `,
-          { address }
-        ),
-      ]);
-
-      const redemptionCount = redemptions.Redemption?.length || 0;
-      const transferCount = transfers.TransferInPeriod?.length || 0;
-
-      return {
-        count: redemptionCount + transferCount,
-      };
-    }),
-
-  getSecurityAlerts: baseProcedure
-    .input(
-      z.object({
-        isActive: z.boolean().optional(),
-        limit: z.number().min(1).max(100).default(20),
-      })
-    )
-    .query(async ({ input }) => {
-      const where = input.isActive !== undefined
-        ? `where: {isActive: {_eq: ${input.isActive}}}`
-        : "";
-
-      const data = await queryEnvio(`
-        query GetSecurityAlerts {
-          SecurityAlert(
-            ${where}
-            limit: ${input.limit}
-            order_by: {createdAt: desc}
+      const data = await queryEnvio(
+        `
+        query GetUserRedemptions($address: String!) {
+          Redemption(
+            where: {rootDelegator: {_eq: $address}}
           ) {
             id
-            alertType
-            severity
-            message
-            userAddress
-            triggerCount
-            isActive
-            createdAt
-            resolvedAt
-            metadata
           }
         }
-      `);
+      `,
+        { address }
+      );
 
       return {
-        alerts: data.SecurityAlert || [],
+        count: data.Redemption?.length || 0,
       };
     }),
 
-  getDelegationHistory: baseProcedure
-    .input(
-      z.object({
-        delegationHash: z.string(),
-      })
-    )
-    .query(async ({ input }) => {
-      const [enabled, disabled, redemptions] = await Promise.all([
-        queryEnvio(
-          `
-          query GetEnabledDelegation($hash: String!) {
-            EnabledDelegation(
-              where: {delegationHash: {_eq: $hash}}
-            ) {
-              id
-              delegationHash
-              blockNumber
-              timestamp
-              transactionHash
-            }
-          }
-        `,
-          { hash: input.delegationHash }
-        ),
-        queryEnvio(
-          `
-          query GetDisabledDelegation($hash: String!) {
-            DisabledDelegation(
-              where: {delegationHash: {_eq: $hash}}
-            ) {
-              id
-              delegationHash
-              blockNumber
-              timestamp
-              transactionHash
-            }
-          }
-        `,
-          { hash: input.delegationHash }
-        ),
-        queryEnvio(
-          `
-          query GetRedemptionsByHash($hash: String!) {
-            Redemption(
-              where: {delegationHash: {_eq: $hash}}
-              order_by: {timestamp: desc}
-            ) {
-              id
-              rootDelegator
-              redeemer
-              blockNumber
-              timestamp
-              transactionHash
-            }
-          }
-        `,
-          { hash: input.delegationHash }
-        ),
-      ]);
-
-      return {
-        enabled: enabled.EnabledDelegation?.[0] || null,
-        disabled: disabled.DisabledDelegation?.[0] || null,
-        redemptions: redemptions.Redemption || [],
-        redemptionCount: redemptions.Redemption?.length || 0,
-      };
-    }),
 });
 

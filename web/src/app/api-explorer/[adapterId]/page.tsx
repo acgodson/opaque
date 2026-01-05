@@ -38,6 +38,15 @@ export default function AdapterAPIExplorer() {
     { refetchInterval: 5000 }
   );
 
+  // Get session account redemptions if we have session data
+  const sessionAccountRedemptions = trpc.envio.getSessionAccountRedemptions.useQuery(
+    { sessionAccountAddress: sessionData?.address as `0x${string}` },
+    { 
+      enabled: !!sessionData?.address && isConnected, 
+      refetchInterval: 5000 
+    }
+  );
+
   const handleLookupSession = async () => {
     if (!sessionAccountId.trim()) {
       setLookupError("Please enter a sessionAccountId");
@@ -260,6 +269,26 @@ export default function AdapterAPIExplorer() {
                         {sessionData.address}
                       </div>
                     </div>
+                    {sessionAccountRedemptions.data && (
+                      <div className="mt-4 p-4 bg-zinc-900/50 border border-zinc-700 rounded-lg">
+                        <div className="text-sm font-semibold text-zinc-300 mb-2">
+                          Session Account Activity
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-zinc-400">Redemptions (24h):</span>
+                            <span className="text-lg font-mono text-blue-400">
+                              {sessionAccountRedemptions.data.count}
+                            </span>
+                          </div>
+                          {sessionAccountRedemptions.data.redemptions.length > 0 && (
+                            <div className="text-xs text-zinc-500 mt-2">
+                              Latest: Block {sessionAccountRedemptions.data.redemptions[0]?.blockNumber} • {new Date(Number(sessionAccountRedemptions.data.redemptions[0]?.blockTimestamp) * 1000).toLocaleString()}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -335,6 +364,77 @@ export default function AdapterAPIExplorer() {
                     </div>
                   </div>
                 )}
+              </div>
+            </div>
+
+            <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
+              <h2 className="text-xl font-semibold mb-4">Envio Query Examples</h2>
+              <p className="text-sm text-zinc-400 mb-4">
+                Query on-chain redemption data using your account and session addresses
+              </p>
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-sm font-semibold mb-2 text-zinc-300">
+                    Get User Redemption Count
+                  </h3>
+                  <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-4 font-mono text-xs overflow-x-auto">
+                    <pre className="text-zinc-300">
+                      {`GET /api/envio.getUserRedemptionCount?input=${encodeURIComponent(JSON.stringify({ userAddress: address }))}`}
+                    </pre>
+                  </div>
+                  <div className="mt-2 text-xs text-zinc-500">
+                    Returns: {redemptionCount.data?.count ?? 0} redemptions
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-semibold mb-2 text-zinc-300">
+                    Get User Redemptions (Recent)
+                  </h3>
+                  <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-4 font-mono text-xs overflow-x-auto">
+                    <pre className="text-zinc-300">
+                      {`GET /api/envio.getUserRedemptions?input=${encodeURIComponent(JSON.stringify({ userAddress: address, limit: 5 }))}`}
+                    </pre>
+                  </div>
+                  <div className="mt-2 text-xs text-zinc-500">
+                    Returns: {redemptionCount.data?.count ?? 0} total redemptions for your account
+                  </div>
+                </div>
+
+                {sessionData?.address && (
+                  <div>
+                    <h3 className="text-sm font-semibold mb-2 text-zinc-300">
+                      Get Session Account Redemptions
+                    </h3>
+                    <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-4 font-mono text-xs overflow-x-auto">
+                      <pre className="text-zinc-300">
+                        {`GET /api/envio.getSessionAccountRedemptions?input=${encodeURIComponent(JSON.stringify({ sessionAccountAddress: sessionData.address, timeWindowHours: 24 }))}`}
+                      </pre>
+                    </div>
+                    <div className="mt-2 text-xs text-zinc-500">
+                      Session: {sessionData.address.slice(0, 10)}...{sessionData.address.slice(-8)}
+                      {sessionAccountRedemptions.data && (
+                        <span className="ml-2 text-blue-400">
+                          • {sessionAccountRedemptions.data.count} redemptions (24h)
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <h3 className="text-sm font-semibold mb-2 text-zinc-300">
+                    Get Recent Redemptions (All Users)
+                  </h3>
+                  <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-4 font-mono text-xs overflow-x-auto">
+                    <pre className="text-zinc-300">
+                      {`GET /api/envio.getRecentRedemptions?input=${encodeURIComponent(JSON.stringify({ limit: 10 }))}`}
+                    </pre>
+                  </div>
+                  <div className="mt-2 text-xs text-zinc-500">
+                    Returns: {recentRedemptions.data?.redemptions.length ?? 0} most recent redemptions across all users
+                  </div>
+                </div>
               </div>
             </div>
 

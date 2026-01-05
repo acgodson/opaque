@@ -127,9 +127,9 @@ const ENDPOINTS: Record<string, Endpoint[]> = {
   ],
   envio: [
     {
-      path: "envio.getStats",
+      path: "envio.getRootDelegatorCount",
       method: "query",
-      description: "Get global on-chain statistics (total redemptions, enabled, disabled)",
+      description: "Get count of unique root delegators (for monitoring dashboard)",
       inputSchema: {},
       exampleInput: {},
     },
@@ -169,27 +169,31 @@ const ENDPOINTS: Record<string, Endpoint[]> = {
       },
     },
     {
-      path: "envio.getDelegationHistory",
+      path: "envio.getSessionAccountRedemptions",
       method: "query",
-      description: "Get full history of a delegation (enabled, disabled, redemptions)",
+      description: "Get redemptions by session account (redeemer) within time window",
       inputSchema: {
-        delegationHash: "string (required)",
+        sessionAccountAddress: "0x... (required)",
+        timeWindowHours: "number (optional, default: 24)",
       },
       exampleInput: {
-        delegationHash: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+        sessionAccountAddress: "0xcb3b302248cbee4f9b42c09c5adbc841c4fafc2f",
+        timeWindowHours: 24,
       },
     },
     {
-      path: "envio.getSecurityAlerts",
+      path: "envio.getRedemptionSpike",
       method: "query",
-      description: "Get security alerts from on-chain anomaly detection",
+      description: "Detect redemption spikes over time periods (for signal policy)",
       inputSchema: {
-        isActive: "boolean (optional)",
-        limit: "number (optional, default: 20, max: 100)",
+        timeWindowMinutes: "number (optional, default: 60, max: 1440)",
+        thresholdMultiplier: "number (optional, default: 2)",
+        globalThreshold: "number (optional)",
+        userAddress: "0x... (optional)",
       },
       exampleInput: {
-        isActive: true,
-        limit: 20,
+        timeWindowMinutes: 60,
+        thresholdMultiplier: 2,
       },
     },
   ],

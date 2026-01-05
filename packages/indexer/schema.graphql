@@ -1,46 +1,11 @@
-type Redemption @entity {
+
+type Redemption {
   id: ID!
   rootDelegator: String!
   redeemer: String!
-  delegationHash: String!
+  delegationHash: String
   blockNumber: BigInt!
-  timestamp: BigInt!
+  blockTimestamp: BigInt!
   transactionHash: String!
-}
-
-type EnabledDelegation @entity {
-  id: ID!
-  delegationHash: String!
-  blockNumber: BigInt!
-  timestamp: BigInt!
-  transactionHash: String!
-}
-
-type DisabledDelegation @entity {
-  id: ID!
-  delegationHash: String!
-  blockNumber: BigInt!
-  timestamp: BigInt!
-  transactionHash: String!
-}
-
-type Stats @entity {
-  id: ID!
-  totalRedemptions: BigInt!
-  totalEnabled: BigInt!
-  totalDisabled: BigInt!
-  lastUpdated: BigInt!
-}
-
-type SecurityAlert @entity {
-  id: ID!
-  alertType: String!
-  severity: String!
-  message: String!
-  userAddress: String
-  triggerCount: BigInt!
-  isActive: Boolean!
-  createdAt: BigInt!
-  resolvedAt: BigInt
-  metadata: String
+  logIndex: BigInt!
 }

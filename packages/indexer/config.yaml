@@ -1,15 +1,33 @@
-name: 0xvisor-delegation-monitor
-description: Monitor MetaMask DelegationManager for 0xvisor
-raw_events: true
+# yaml-language-server: $schema=./node_modules/envio/evm.schema.json
+name:  0xvisor-delegation-monitor
+description: 0xvisor indexer
+#Global contract definitions that must contain all definitions except
+#addresses. Now you can share a single handler/abi/event definitions
+#for contracts across multiple chains
+contracts:
+  - name: DelegationManager
+    abi_file_path: ./abis/DelegationManager.json
+    handler: ./src/EventHandlers.ts
+    events:
+      - event: RedeemedDelegation
+        field_selection:
+          transaction_fields:
+            - hash
 networks:
-  - id: 11155111
+  - id: 11155111 # Sepolia
     start_block: 9980000
     contracts:
-      - name: DelegationManager
-        address: "0xdb9B1e94B5b69Df7e401DDbedE43491141047dB3"
-        abi_file_path: ./abis/DelegationManager.json
-        handler: src/EventHandlers.ts
-        events:
-          - event: RedeemedDelegation(address indexed rootDelegator, address indexed redeemer, bytes32 indexed delegationHash)
-          - event: EnabledDelegation(bytes32 indexed delegationHash)
-          - event: DisabledDelegation(bytes32 indexed delegationHash)
+      - name: DelegationManager 
+        address: 0xdb9B1e94B5b69Df7e401DDbedE43491141047dB3
+ 
+# Unordered multichain mode allows you to index events from multiple chains
+# in realtime but doesn't guarentee ordering between chains
+# https://docs.envio.dev/docs/HyperIndex/multichain-indexing#unordered-multichain-mode
+unordered_multichain_mode: false
+# Preload optimisation makes your indexer much faster.
+# But be aware that your handlers will run twice,
+# so make sure to use Effect API for external calls.
+preload_handlers: true
+# Address format for Ethereum addresses: 'checksum' or 'lowercase'
+# using lowercase addresses is slightly faster
+address_format: lowercase

@@ -9,6 +9,10 @@
     "build:web": "pnpm --filter @0xvisor/web build"
   },
   "devDependencies": {
+    "ts-node": "^10.9.1",
     "tsx": "^4.21.0"
+  },
+  "dependencies": {
+    "js-sdsl": "^4.4.2"
   }
 }
