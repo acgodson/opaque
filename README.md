@@ -213,8 +213,6 @@ const redeemCallData = encodeFunctionData({
 
 **API Integration:**
 - Envio router: [`web/src/trpc/routers/envio.ts`](web/src/trpc/routers/envio.ts)
-  - All queries use `blockTimestamp` field (not `timestamp`) and `numeric!` type for time comparisons
-  - Uses `order_by: {blockNumber: desc}` for sorting (works with deployed schema)
 - API Explorer: [`web/src/app/api-explorer/page.tsx`](web/src/app/api-explorer/page.tsx)
   - Lists all available Envio endpoints with examples
 - Adapter API Explorer: [`web/src/app/api-explorer/[adapterId]/page.tsx`](web/src/app/api-explorer/[adapterId]/page.tsx#L370-L425)
@@ -231,43 +229,13 @@ const redeemCallData = encodeFunctionData({
 **Anomaly Detection (Redemption Spike Detection):**
 ```typescript
 // web/src/trpc/routers/envio.ts#L98-L197
-getRedemptionSpike: baseProcedure
-  .input(
-    z.object({
-      timeWindowMinutes: z.number().min(1).max(1440).default(60),
-      thresholdMultiplier: z.number().min(1).default(2),
-      globalThreshold: z.number().optional(),
-      userAddress: ethereumAddress.optional(),
-    })
-  )
-  .query(async ({ input }) => {
-    // Detect redemption spikes over time period
-    const timeWindowSeconds = input.timeWindowMinutes * 60;
-    const now = Math.floor(Date.now() / 1000);
-    const since = now - timeWindowSeconds;
-    const previousWindowSince = now - (timeWindowSeconds * 2);
-
-    // Query current and previous time windows
-    // Uses blockTimestamp field with numeric! type (not BigInt!)
-    const [currentData, previousData] = await Promise.all([
-      queryEnvio(/* current window query with blockTimestamp */),
-      queryEnvio(/* previous window query with blockTimestamp */),
-    ]);
 
     const currentCount = currentData.Redemption?.length || 0;
     const previousCount = previousData.Redemption?.length || 0;
     const average = previousCount > 0 ? previousCount : 1;
+    
     const spikeDetected = currentCount >= average * input.thresholdMultiplier;
     
-    return {
-      currentCount,
-      previousCount,
-      spikeDetected,
-      threshold: Math.ceil(average * input.thresholdMultiplier),
-      timeWindowMinutes: input.timeWindowMinutes,
-      isGlobal: !input.userAddress,
-    };
-  })
 ```
 
 **Event Handlers:**
@@ -295,19 +263,15 @@ DelegationManager.RedeemedDelegation.handler(async ({ event, context }) => {
 });
 ```
 
-**Note:** The  indexer only tracks `RedeemedDelegation` events. Spike detection and monitoring are handled via GraphQL queries in the web application and agent signal fetcher.
-
 **Signal Integration:**
 - Envio signal fetcher: [`packages/agent/src/signals/envio-signal.ts`](packages/agent/src/signals/envio-signal.ts#L15-L126)
   - Fetches recent redemptions using `order_by: {blockTimestamp: desc}` - [`packages/agent/src/signals/envio-signal.ts#L35-L48`](packages/agent/src/signals/envio-signal.ts#L35-L48)
   - Performs anomaly detection (redemption spike detection) by comparing current vs previous hour - [`packages/agent/src/signals/envio-signal.ts#L52-L90`](packages/agent/src/signals/envio-signal.ts#L52-L90)
-  - Uses `blockTimestamp` field with `BigInt!` type (works in agent signal, but tRPC router uses `numeric!`)
   - Compares current hour vs previous hour to detect 2x threshold spikes
   - Provides spike data to Security Pause policy for execution blocking
 
 **Dashboard Integration:**
-- Signal status widget: [`web/src/components/SignalStatusWidget.tsx`](web/src/components/SignalStatusWidget.tsx#L73-L154)
-  - Displays Envio connection status, unique root delegator count, and anomaly detection (redemption spike status)
+- Signal status widget: [`web/src/components/SignalStatusWidget.tsx`](web/src/components/SignalStatusWidget.tsx#L73-L154)=
   - Shows root delegator count from `signals.envio.rootDelegatorCount` - [`web/src/components/SignalStatusWidget.tsx#L97-L104`](web/src/components/SignalStatusWidget.tsx#L97-L104)
   - Displays redemption spike detection status - [`web/src/components/SignalStatusWidget.tsx#L107-L129`](web/src/components/SignalStatusWidget.tsx#L107-L129)
 - Monitoring dashboard: [`web/src/app/dashboard/page.tsx`](web/src/app/dashboard/page.tsx#L176-L195)
@@ -385,7 +349,6 @@ query GetRedemptionSpike($since: numeric!, $previousSince: numeric!) {
 }
 ```
 
-**Note:** The streamlined indexer only tracks `RedeemedDelegation` events. All queries are performed via the GraphQL API, and anomaly detection (redemption spike detection) is computed by comparing time windows in the application layer.
 
 ## Security Architecture
 
