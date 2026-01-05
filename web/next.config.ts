@@ -7,11 +7,11 @@ const nextConfig: NextConfig = {
       config.externals = config.externals || [];
       if (Array.isArray(config.externals)) {
         config.externals = config.externals.filter(
-          (external) => external !== "@0xvisor/agent"
+          (external: string | RegExp | Function) => external !== "@0xvisor/agent"
         );
       } else if (typeof config.externals === "function") {
         const originalExternals = config.externals;
-        config.externals = (context, request, callback) => {
+        config.externals = (context: any, request: string, callback: any) => {
           if (request === "@0xvisor/agent") {
             return callback();
           }
