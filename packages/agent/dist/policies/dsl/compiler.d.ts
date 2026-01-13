@@ -4,7 +4,7 @@ import { CompiledPolicy } from "./types.js";
  *
  * Compiles user-friendly PolicyDocuments into:
  * 1. MetaMask Advanced Permissions (ERC-7715)
- * 2. 0xVisor Policy Rules
+ * 2. opaque Policy Rules
  */
 export declare class PolicyCompiler {
     /**
@@ -22,7 +22,7 @@ export declare class PolicyCompiler {
      */
     private toMetaMaskPermission;
     /**
-     * Convert PolicyDocument conditions to 0xVisor Rules
+     * Convert PolicyDocument conditions to opaque Rules
      *
      * Each condition type maps to one or more policy rules
      */

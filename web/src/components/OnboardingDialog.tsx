@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 
-const STORAGE_KEY = "0xvisor_onboarding_completed";
+const STORAGE_KEY = "opaque_onboarding_completed";
 
 export function OnboardingDialog() {
   const [isOpen, setIsOpen] = useState(true);
@@ -220,7 +220,7 @@ export function OnboardingDialog() {
           <div class="onboarding-gradient-overlay"></div>
           <div class="onboarding-content">
             <div style="margin-bottom: auto;">
-              <div class="onboarding-title">0xVisor</div>
+              <div class="onboarding-title">opaque</div>
               <div class="onboarding-subtitle">Policy-Governed Execution for MetaMask Advanced Permissions</div>
             </div>
             <div class="onboarding-footer">
@@ -363,7 +363,7 @@ export function OnboardingDialog() {
           <div class="onboarding-gradient-overlay"></div>
           <div class="onboarding-content">
             <div style="margin-bottom: 60px;">
-              <div style="font-family: 'Orbitron', sans-serif; font-size: 40px; font-weight: 700; color: #00ffc8; margin-bottom: 30px;">0xVisor</div>
+              <div style="font-family: 'Orbitron', sans-serif; font-size: 40px; font-weight: 700; color: #00ffc8; margin-bottom: 30px;">opaque</div>
               <div style="font-size: 24px; color: #a0b0c0; font-weight: 400;">What Do Users Need to Trust Automation?</div>
             </div>
             <div style="flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; padding: 0 20px;">
@@ -465,8 +465,8 @@ export function OnboardingDialog() {
                     </svg>
                     <span style="font-family: 'Orbitron', sans-serif; font-size: 28px; font-weight: 700; color: #e0e8f0;">Open Source</span>
                   </div>
-                  <a href="https://github.com/acgodson/0xvisor" target="_blank" style="display: flex; align-items: center; justify-content: center; gap: 12px; font-size: 24px; color: #00ffc8; text-decoration: none; font-weight: 600; transition: all 0.3s ease;">
-                    github.com/acgodson/0xvisor
+                  <a href="https://github.com/acgodson/opaque" target="_blank" style="display: flex; align-items: center; justify-content: center; gap: 12px; font-size: 24px; color: #00ffc8; text-decoration: none; font-weight: 600; transition: all 0.3s ease;">
+                    github.com/acgodson/opaque
                     <svg style="width: 24px; height: 24px;" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
                     </svg>

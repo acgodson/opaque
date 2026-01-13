@@ -20,7 +20,7 @@ if (isProduction) {
   const { drizzle } = require('drizzle-orm/node-postgres');
   const { Pool } = require('pg');
   const pool = new Pool({
-    connectionString: process.env.POSTGRES_URL || 'postgresql://postgres:postgres@localhost:5432/0xvisor',
+    connectionString: process.env.POSTGRES_URL || 'postgresql://postgres:postgres@localhost:5432/opaque',
   });
   db = drizzle(pool, { schema });
   if (process.env.NODE_ENV !== 'production') {

@@ -5,7 +5,7 @@ import { enclaveClient } from "../lib/enclave-client";
 
 export const createTRPCContext = cache(async () => {
   //TODO: add OAUTH
-  return { user: "demo_0xvisor", db, enclaveClient };
+  return { user: "demo_opaque", db, enclaveClient };
 });
 
 type Context = Awaited<ReturnType<typeof createTRPCContext>>;

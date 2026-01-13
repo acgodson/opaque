@@ -9,6 +9,6 @@ export default {
   out: './drizzle',
   dialect: 'postgresql',
   dbCredentials: {
-    url: process.env.POSTGRES_URL || 'postgresql://postgres:postgres@localhost:5432/0xvisor',
+    url: process.env.POSTGRES_URL || 'postgresql://postgres:postgres@localhost:5432/opaque',
   },
 } satisfies Config;

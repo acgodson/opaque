@@ -13,7 +13,7 @@ import { getTokenAddress, getTokenDecimals } from "./tokens.js";
  *
  * Compiles user-friendly PolicyDocuments into:
  * 1. MetaMask Advanced Permissions (ERC-7715)
- * 2. 0xVisor Policy Rules
+ * 2. opaque Policy Rules
  */
 export class PolicyCompiler {
   /**
@@ -31,7 +31,7 @@ export class PolicyCompiler {
       // Compile to MetaMask permission
       const permission = this.toMetaMaskPermission(policy);
 
-      // Compile to 0xVisor rules
+      // Compile to opaque rules
       const rules = this.toVisorRules(policy);
 
       // Generate human-readable summary
@@ -93,7 +93,7 @@ export class PolicyCompiler {
   }
 
   /**
-   * Convert PolicyDocument conditions to 0xVisor Rules
+   * Convert PolicyDocument conditions to opaque Rules
    *
    * Each condition type maps to one or more policy rules
    */

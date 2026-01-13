@@ -4,7 +4,7 @@ import { z } from "zod";
  * Policy DSL - Domain-Specific Language for building transaction policies
  *
  * This provides a user-friendly, declarative format for defining policies
- * that compile to both MetaMask Advanced Permissions and 0xVisor policy rules.
+ * that compile to both MetaMask Advanced Permissions and opaque policy rules.
  */
 
 // ============================================================================
@@ -16,7 +16,7 @@ import { z } from "zod";
  *
  * This is what users build in the UI. It compiles to:
  * 1. MetaMask Permission (for ERC-7715 delegation)
- * 2. 0xVisor Policy Rules (for transaction validation)
+ * 2. opaque Policy Rules (for transaction validation)
  */
 export interface PolicyDocument {
   /** Schema version for future evolution */
@@ -106,7 +106,7 @@ export interface MetaMaskPermission {
 }
 
 /**
- * 0xVisor Rule Configuration
+ * opaque Rule Configuration
  */
 export interface RuleConfig {
   /** Rule type identifier */
@@ -127,7 +127,7 @@ export interface CompiledPolicy {
   policy: PolicyDocument;
   /** Derived MetaMask permission */
   permission: MetaMaskPermission;
-  /** Derived 0xVisor rules */
+  /** Derived opaque rules */
   rules: RuleConfig[];
   /** Human-readable summary */
   summary: string;

@@ -7,7 +7,7 @@ import {
   getAdapter,
   policyEngine,
   type ProposedTransaction,
-} from "@0xvisor/agent";
+} from "@opaque/agent";
 
 const ethereumAddress = z
   .string()

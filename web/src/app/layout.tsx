@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "0xVisor - Policy-Aware Automation",
+  title: "Opaque - Policy-Aware Automation",
   description: "Policy-aware automation platform for MetaMask Advanced Permissions (ERC-7715)",
 };
 

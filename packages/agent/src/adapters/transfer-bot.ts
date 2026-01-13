@@ -42,7 +42,7 @@ export const transferBotAdapter: Adapter = {
     "Transfers 0.1 USDC or 0.1 ETH per execution. The amount you set is the maximum allowed per period (daily/weekly/monthly). Configure policies to control spending limits and recipient whitelists.",
   icon: "💸",
   version: "1.0.0",
-  author: "0xVisor",
+  author: "opaque",
   requiredPermissions: [],
 
   triggers: [

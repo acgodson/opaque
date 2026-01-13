@@ -8,7 +8,7 @@ import {
   policyCompiler,
   policyTemplates,
   serializeBigInt,
-} from "@0xvisor/agent";
+} from "@opaque/agent";
 
 const ethereumAddress = z
   .string()
@@ -33,7 +33,7 @@ export const policiesRouter = createTRPCRouter({
     .mutation(async ({ input }) => {
       try {
         if (!policyCompiler || typeof policyCompiler.compile !== 'function') {
-          throw new Error("Policy compiler is not available. Please ensure @0xvisor/agent is built.");
+          throw new Error("Policy compiler is not available. Please ensure @opaque/agent is built.");
         }
 
         const compiled = policyCompiler.compile(input);

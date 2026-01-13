@@ -21,8 +21,8 @@ export function Navigation() {
               className="flex items-center hover:opacity-80 transition-opacity"
             >
               <img 
-                src="/0xvisor_transparent.png" 
-                alt="0xVisor" 
+                src="/opaque_transparent.png" 
+                alt="opaque" 
                 className="h-10 w-auto"
               />
             </button>
@@ -57,7 +57,7 @@ export function Navigation() {
                 API
               </button>
               <a
-                href="https://github.com/acgodson/0xvisor"
+                href="https://github.com/acgodson/opaque"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm font-medium text-zinc-400 hover:text-white transition-colors"

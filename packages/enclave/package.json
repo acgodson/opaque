@@ -1,5 +1,5 @@
 {
-  "name": "@0xvisor/enclave",
+  "name": "@opaque/enclave",
   "version": "1.0.0",
   "type": "module",
   "main": "./dist/index.js",
@@ -7,7 +7,7 @@
     "build": "tsup"
   },
   "dependencies": {
-    "@0xvisor/agent": "workspace:*",
+    "@opaque/agent": "workspace:*",
     "@metamask/smart-accounts-kit": "^0.3.0",
     "permissionless": "^0.2.57",
     "viem": "^2.21.54"

@@ -1,4 +1,4 @@
-import type { PolicyContext, PolicyResult, EvaluationResult } from "@0xvisor/agent";
+import type { PolicyContext, PolicyResult, EvaluationResult } from "@opaque/agent";
 import {
   gasLimitRule,
   timeWindowRule,
@@ -6,7 +6,7 @@ import {
   securityPauseRule,
   recipientWhitelistRule,
   cooldownRule,
-} from "@0xvisor/agent";
+} from "@opaque/agent";
 
 const policyRules = new Map([
   ["gas-limit", gasLimitRule],

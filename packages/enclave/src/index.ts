@@ -1,4 +1,4 @@
 import { startServer } from "./server.js";
 
-console.log("0xVisor Enclave Starting...");
+console.log("opaque Enclave Starting...");
 startServer();

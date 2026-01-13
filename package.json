@@ -1,12 +1,12 @@
 {
-  "name": "0xvisor-monorepo",
+  "name": "opaque-monorepo",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "pnpm --filter @0xvisor/agent build && pnpm --filter @0xvisor/web build",
-    "dev": "pnpm --filter @0xvisor/web dev",
-    "build:agent": "pnpm --filter @0xvisor/agent build",
-    "build:web": "pnpm --filter @0xvisor/web build"
+    "build": "pnpm --filter @opaque/agent build && pnpm --filter @opaque/web build",
+    "dev": "pnpm --filter @opaque/web dev",
+    "build:agent": "pnpm --filter @opaque/agent build",
+    "build:web": "pnpm --filter @opaque/web build"
   },
   "devDependencies": {
     "ts-node": "^10.9.1",

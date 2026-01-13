@@ -168,7 +168,7 @@ export function PolicyPreview({ compiled, policyDocument, loading, error, onPoli
                   >
                     <div className="flex items-center gap-2">
                       <span className="text-lg">⚙️</span>
-                      <span className="font-semibold">0xVisor Safeguards</span>
+                      <span className="font-semibold">opaque Safeguards</span>
                       <span className="text-sm text-zinc-400">
                         ({compiled.rules.length} active)
                       </span>

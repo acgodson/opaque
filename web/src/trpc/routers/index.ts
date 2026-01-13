@@ -21,7 +21,7 @@ export const appRouter = createTRPCRouter({
   health: baseProcedure.query(async () => {
     return {
       success: true,
-      message: '0xVisor running',
+      message: 'opaque running',
       timestamp: new Date().toISOString(),
     };
   }),

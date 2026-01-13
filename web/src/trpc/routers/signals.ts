@@ -3,7 +3,7 @@ import { createTRPCRouter, baseProcedure } from "../init";
 import {
   fetchAllSignals,
   getSignal,
-} from "@0xvisor/agent";
+} from "@opaque/agent";
 
 export const signalsRouter = createTRPCRouter({
   // Fetch all signals (async, no DB)

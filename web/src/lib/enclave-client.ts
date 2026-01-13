@@ -1,4 +1,4 @@
-import type { ProposedTransaction } from "@0xvisor/agent";
+import type { ProposedTransaction } from "@opaque/agent";
 import axios from "axios";
 
 interface SessionEnclaveClient {

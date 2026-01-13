@@ -62,7 +62,7 @@ export default function AdaptersMarketplace() {
             </h1>
             <p className="text-lg text-zinc-400 mb-6">
               Install pre-built automation adapters with granular policy controls.
-              Each adapter runs with MetaMask Advanced Permissions and 0xVisor safety policies.
+              Each adapter runs with MetaMask Advanced Permissions and opaque safety policies.
             </p>
 
             {!isConnected && (
@@ -166,11 +166,11 @@ export default function AdaptersMarketplace() {
         <div className="max-w-7xl mx-auto px-6 py-8 text-center">
           <h2 className="text-xl font-bold mb-2">Want to build your own adapter?</h2>
           <p className="text-zinc-400 text-sm mb-4 max-w-2xl mx-auto">
-            0xVisor is open-source and extensible. Create custom automation adapters
+            opaque is open-source and extensible. Create custom automation adapters
             and share them with the community.
           </p>
           <a
-            href="https://github.com/acgodson/0xvisor"
+            href="https://github.com/acgodson/opaque"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-6 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-lg font-medium transition-colors"

@@ -20,8 +20,8 @@
     ],
     "paths": {
       "@/*": ["./src/*"],
-      "@0xvisor/agent": ["../agent/dist/index.d.ts"],
-      "@0xvisor/agent/*": ["../agent/dist/*"]
+      "@opaque/agent": ["../agent/dist/index.d.ts"],
+      "@opaque/agent/*": ["../agent/dist/*"]
     }
   },
   "include": [

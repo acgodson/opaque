@@ -1,14 +1,14 @@
 {
-  "name": "@0xvisor/web",
+  "name": "@opaque/web",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
-    "build": "pnpm --filter @0xvisor/agent build && next build --webpack",
+    "build": "pnpm --filter @opaque/agent build && next build --webpack",
     "start": "next start"
   },
   "dependencies": {
-    "@0xvisor/agent": "file:../packages/agent",
+    "@opaque/agent": "file:../packages/agent",
     "@metamask/smart-accounts-kit": "^0.3.0",
     "@tanstack/react-query": "^5.56.2",
     "@trpc/client": "11.0.0-rc.532",

@@ -447,7 +447,7 @@ export default function AdapterAPIExplorer() {
                   </h3>
                   <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-4 font-mono text-xs overflow-x-auto">
                     <pre className="text-zinc-300">
-                      {`curl -X POST https://0xvisor-web.vercel.app/api/session.getBySessionAccountId \\
+                      {`curl -X POST https://opaque-web.vercel.app/api/session.getBySessionAccountId \\
   -H "Content-Type: application/json" \\
   -d '{
     "sessionAccountId": "session_1234567890_abc123"
@@ -462,7 +462,7 @@ export default function AdapterAPIExplorer() {
                   </h3>
                   <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-4 font-mono text-xs overflow-x-auto">
                     <pre className="text-zinc-300">
-                      {`curl -X POST https://0xvisor-web.vercel.app/api/execute.execute \\
+                      {`curl -X POST https://opaque-web.vercel.app/api/execute.execute \\
   -H "Content-Type: application/json" \\
   -d '{
     "userAddress": "${address}",

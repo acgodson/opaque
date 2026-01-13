@@ -1,5 +1,5 @@
 #!/bin/sh
-echo "0xVisor Enclave Starting..."
+echo "opaque Enclave Starting..."
 
 ip link set dev lo up
 

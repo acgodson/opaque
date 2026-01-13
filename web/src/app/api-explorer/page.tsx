@@ -265,7 +265,7 @@ export default function APIExplorer() {
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">API Explorer</h1>
           <p className="text-zinc-400">
-            Interactive API documentation and testing for 0xVisor endpoints
+            Interactive API documentation and testing for opaque endpoints
           </p>
         </div>
 
@@ -410,7 +410,7 @@ export default function APIExplorer() {
                   <h3 className="text-lg font-semibold mb-4">cURL Example</h3>
                   <div className="bg-zinc-950 border border-zinc-800 rounded p-4 font-mono text-xs overflow-x-auto">
                     <pre className="text-zinc-300">
-                      {`curl -X POST https://0xvisor-web.vercel.app/api/${selectedEndpoint.path} \\
+                      {`curl -X POST https://opaque-web.vercel.app/api/${selectedEndpoint.path} \\
   -H "Content-Type: application/json" \\
   -d '${JSON.stringify(selectedEndpoint.exampleInput)}'`}
                     </pre>
