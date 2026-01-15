@@ -2,13 +2,27 @@ FROM --platform=linux/amd64 node:20-slim
 
 RUN apt-get update && apt-get install -y python3 iproute2 && rm -rf /var/lib/apt/lists/*
 
+RUN npm install -g pnpm
+
 WORKDIR /app
 
-COPY packages/enclave/dist ./packages/enclave/dist
-COPY packages/enclave/vsock-bridge.py ./packages/enclave/
-COPY packages/enclave/start.sh ./packages/enclave/
+COPY packages/enclave/package.json ./packages/enclave/
+COPY packages/enclave/tsconfig.json ./packages/enclave/
+COPY packages/enclave/tsup.config.ts ./packages/enclave/
+
+WORKDIR /app/packages/enclave
+RUN pnpm install
+
+COPY packages/enclave/src ./src
+COPY packages/enclave/circuit ./circuit
+RUN pnpm run build
+
+COPY packages/enclave/vsock-bridge.py ./
+COPY packages/enclave/start.sh ./
 
 RUN chmod +x /app/packages/enclave/start.sh
+
+WORKDIR /app
 
 EXPOSE 5000
 
