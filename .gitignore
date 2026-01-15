@@ -1,0 +1,163 @@
+# Dependencies
+node_modules/
+**/node_modules/
+.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# Build outputs
+dist/
+build/
+out/
+.next/
+**/dist/
+**/build/
+**/out/
+**/.next/
+*.tsbuildinfo
+**/*.tsbuildinfo
+
+# Exception: commit agent package dist for Vercel deployment
+!packages/agent/dist/
+!packages/agent/dist/**
+
+# Drizzle ORM artifacts
+**/drizzle/
+drizzle/
+**/drizzle/*.sql
+**/drizzle/meta/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+**/*.db
+**/*.sqlite
+**/*.sqlite3
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env*.local
+**/.env
+**/.env.local
+**/.env*.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+**/*.log
+
+# Testing
+coverage/
+.nyc_output/
+**/coverage/
+**/.nyc_output/
+
+# IDE and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Vercel
+.vercel
+**/.vercel
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+**/.cache/
+.turbo/
+**/.turbo/
+
+# Package manager
+.pnpm-store/
+**/.pnpm-store/
+
+# TypeScript
+*.tsbuildinfo
+**/*.tsbuildinfo
+next-env.d.ts
+**/next-env.d.ts
+*.js.map
+**/*.js.map
+*.d.ts.map
+**/*.d.ts.map
+
+# Compiled JavaScript (if TypeScript compiles to same directory)
+# Uncomment if you compile TS to JS in src/
+# **/src/**/*.js
+# **/src/**/*.js.map
+
+# Misc
+*.pem
+*.key
+*.cert
+
+# Lock files (keep only one)
+package-lock.json
+yarn.lock
+
+# Test files
+**/__tests__/
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+
+# Development scripts (contain sensitive credentials)
+web/scripts/
+scripts/
+
+# Database migrations (generated/managed separately)
+migrations/
+
+# Test scripts
+test-enclave-execution.ts
+**/test-enclave-execution.ts
+mantle_hardhat/test-*.ts
+
+# Documentation temp files
+**/*.md~
+**/*.md.backup
+
+# ESLint cache
+.eslintcache
+**/.eslintcache
+node_modules/
+scripts/
+.vscode/
+
+elizaos-agent/.eliza
+
+privy-keys.json 
+test.json
+slides

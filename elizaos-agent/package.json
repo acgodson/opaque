@@ -1,0 +1,25 @@
+{
+  "name": "allowancebot-agent",
+  "version": "1.0.0",
+  "description": "ElizaOS agent demonstrating Blind Agent architecture with Opaque plugin",
+  "type": "module",
+  "scripts": {
+    "dev": "elizaos dev --character character.json",
+    "start": "elizaos start --character character.json",
+    "build:plugin": "bun run --cwd ../packages/plugin-opaque build"
+  },
+  "dependencies": {
+    "@elizaos/cli": "1.5.15",
+    "@elizaos/plugin-openai": "1.5.15",
+    "plugin-opaque": "file:../packages/plugin-opaque"
+  },
+  "keywords": [
+    "elizaos",
+    "agent",
+    "blockchain",
+    "zero-knowledge",
+    "opaque"
+  ],
+  "author": "",
+  "license": "UNLICENSED"
+}

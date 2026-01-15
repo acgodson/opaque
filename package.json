@@ -1,0 +1,22 @@
+{
+  "name": "opaque-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "web",
+    "elizaos-agent"
+  ],
+  "scripts": {
+    "build:plugin": "bun run --cwd packages/plugin-opaque build",
+    "build:enclave": "bun run --cwd packages/enclave build",
+    "build:agent": "bun run --cwd packages/agent build",
+    "build": "bun run build:plugin && bun run build:agent && bun run build:enclave",
+    "dev:agent": "bun run --cwd elizaos-agent dev",
+    "clean": "rm -rf packages/*/dist packages/*/node_modules elizaos-agent/node_modules node_modules"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}
