@@ -4,22 +4,19 @@ WORKDIR /app
 
 RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
 
-COPY package.json ./
-COPY packages/plugin-opaque/package.json ./packages/plugin-opaque/
-COPY packages/agent/package.json ./packages/agent/
-COPY elizaos-agent/package.json ./elizaos-agent/
-
-RUN bun install
-
 COPY packages/plugin-opaque ./packages/plugin-opaque
 COPY packages/agent ./packages/agent
+
+WORKDIR /app/packages/plugin-opaque
+RUN bun install
+RUN bun run build
+
+WORKDIR /app
 COPY elizaos-agent ./elizaos-agent
 
-RUN cd packages/plugin-opaque && bun run build
-
 WORKDIR /app/elizaos-agent
+RUN bun install
 
 EXPOSE 3000
 
 CMD ["bun", "run", "start"]
- 
