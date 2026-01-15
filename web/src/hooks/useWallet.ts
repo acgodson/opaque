@@ -101,13 +101,13 @@ export function useWallet() {
     });
   }, []);
 
-  const switchToSepolia = useCallback(async () => {
+  const switchToMantleSepolia = useCallback(async () => {
     if (!window.ethereum) return;
 
     try {
       await window.ethereum.request({
         method: "wallet_switchEthereumChain",
-        params: [{ chainId: "0xaa36a7" }],
+        params: [{ chainId: "0x138b" }],
       });
     } catch (error: any) {
       if (error.code === 4902) {
@@ -115,11 +115,11 @@ export function useWallet() {
           method: "wallet_addEthereumChain",
           params: [
             {
-              chainId: "0xaa36a7",
-              chainName: "Sepolia",
-              rpcUrls: ["https://sepolia.infura.io/v3/"],
-              nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
-              blockExplorerUrls: ["https://sepolia.etherscan.io"],
+              chainId: "0x138b",
+              chainName: "Mantle Sepolia",
+              rpcUrls: ["https://rpc.sepolia.mantle.xyz"],
+              nativeCurrency: { name: "MNT", symbol: "MNT", decimals: 18 },
+              blockExplorerUrls: ["https://sepolia.mantlescan.xyz"],
             },
           ],
         });
@@ -131,7 +131,7 @@ export function useWallet() {
     ...state,
     connect,
     disconnect,
-    switchToSepolia,
-    isWrongNetwork: state.chainId !== null && state.chainId !== 11155111,
+    switchToSepolia: switchToMantleSepolia,
+    isWrongNetwork: state.chainId !== null && state.chainId !== 5003,
   };
 }

@@ -1,8 +1,8 @@
 import type { PolicyRule } from "../types.js";
 /**
- * Recipient Whitelist/Blacklist Rule
+ * Recipient Whitelist Rule
  *
- * Enforces that transactions only go to approved addresses (whitelist)
- * or blocks transactions to specific addresses (blacklist)
+ * Enforces that transactions only go to approved addresses.
+ * Prepares configuration for the enclave's Merkle tree verification.
  */
 export declare const recipientWhitelistRule: PolicyRule;

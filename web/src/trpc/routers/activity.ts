@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { createTRPCRouter, baseProcedure } from "../init";
-import { executionLogs } from "../../db";
-import { eq, desc } from "drizzle-orm";
+import { executionLogs, eq, desc } from "../../db";
 import { getAdapter } from "@opaque/agent";
 
 const ethereumAddress = z

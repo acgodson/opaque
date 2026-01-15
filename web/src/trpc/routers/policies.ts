@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { createTRPCRouter, baseProcedure } from "../init";
-import { userPolicies } from "../../db";
-import { eq, and, isNull } from "drizzle-orm";
+import { userPolicies, eq, and, isNull } from "../../db";
 import {
   getAllPolicyRules,
   getPolicyRule,
@@ -32,10 +31,6 @@ export const policiesRouter = createTRPCRouter({
     .input(z.any())
     .mutation(async ({ input }) => {
       try {
-        if (!policyCompiler || typeof policyCompiler.compile !== 'function') {
-          throw new Error("Policy compiler is not available. Please ensure @opaque/agent is built.");
-        }
-
         const compiled = policyCompiler.compile(input);
 
         if (!compiled.valid) {
@@ -48,7 +43,7 @@ export const policiesRouter = createTRPCRouter({
           compiled: serializeBigInt({
             valid: compiled.valid,
             summary: compiled.summary,
-            permission: compiled.permission,
+            privyPolicy: compiled.privyPolicy,
             rules: compiled.rules,
           }),
         };

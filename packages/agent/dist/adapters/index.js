@@ -1,6 +1,6 @@
-import { transferBotAdapter } from "./transfer-bot.js";
+import { mantleTransferAdapter } from "./mantle-transfer.js";
 const adapters = new Map([
-    [transferBotAdapter.id, transferBotAdapter],
+    [mantleTransferAdapter.id, mantleTransferAdapter],
 ]);
 export function getAdapter(id) {
     return adapters.get(id);
@@ -20,4 +20,4 @@ export function getAdapterMetadata() {
     }));
 }
 export * from "./types.js";
-export { transferBotAdapter } from "./transfer-bot.js";
+export { mantleTransferAdapter } from "./mantle-transfer.js";

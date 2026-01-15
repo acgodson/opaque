@@ -46,7 +46,7 @@ export function PolicyBasicsForm({ value, onChange }: PolicyBasicsFormProps) {
   return (
     <div className="space-y-6">
       <div>
-        <label htmlFor="policy-name" className="block text-sm font-medium mb-2">
+        <label htmlFor="policy-name" className="block text-sm font-medium mb-2 text-white">
           Policy Name
         </label>
         <input
@@ -55,12 +55,12 @@ export function PolicyBasicsForm({ value, onChange }: PolicyBasicsFormProps) {
           value={value.name}
           onChange={handleNameChange}
           placeholder="e.g., My Daily Transfer Policy"
-          className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-4 py-3 input-purple rounded-lg"
         />
       </div>
 
       <div>
-        <label htmlFor="policy-description" className="block text-sm font-medium mb-2">
+        <label htmlFor="policy-description" className="block text-sm font-medium mb-2 text-white">
           Description (Optional)
         </label>
         <textarea
@@ -69,12 +69,12 @@ export function PolicyBasicsForm({ value, onChange }: PolicyBasicsFormProps) {
           onChange={handleDescriptionChange}
           placeholder="Brief description of this policy..."
           rows={2}
-          className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+          className="w-full px-4 py-3 input-purple rounded-lg resize-none"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-3">How much can be transferred?</label>
+        <label className="block text-sm font-medium mb-3 text-white">How much can be transferred?</label>
         <div className="grid grid-cols-3 gap-3">
           <div>
             <input
@@ -82,16 +82,16 @@ export function PolicyBasicsForm({ value, onChange }: PolicyBasicsFormProps) {
               value={value.limits.amount}
               onChange={handleAmountChange}
               placeholder="100"
-              className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-center font-mono"
+              className="w-full px-4 py-3 input-purple rounded-lg text-center font-mono"
             />
-            <div className="text-xs text-zinc-500 mt-1 text-center">Amount</div>
+            <div className="text-xs text-purple-muted mt-1 text-center">Amount</div>
           </div>
 
           <div>
             <select
               value={value.limits.currency}
               onChange={handleCurrencyChange}
-              className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              className="w-full px-4 py-3 input-purple rounded-lg cursor-pointer"
             >
               {SUPPORTED_TOKENS.map((token) => (
                 <option key={token.symbol} value={token.symbol}>
@@ -99,14 +99,14 @@ export function PolicyBasicsForm({ value, onChange }: PolicyBasicsFormProps) {
                 </option>
               ))}
             </select>
-            <div className="text-xs text-zinc-500 mt-1 text-center">Token</div>
+            <div className="text-xs text-purple-muted mt-1 text-center">Token</div>
           </div>
 
           <div>
             <select
               value={value.limits.period}
               onChange={handlePeriodChange}
-              className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              className="w-full px-4 py-3 input-purple rounded-lg cursor-pointer"
             >
               {PERIOD_OPTIONS.map((period) => (
                 <option key={period.value} value={period.value}>
@@ -114,17 +114,17 @@ export function PolicyBasicsForm({ value, onChange }: PolicyBasicsFormProps) {
                 </option>
               ))}
             </select>
-            <div className="text-xs text-zinc-500 mt-1 text-center">Period</div>
+            <div className="text-xs text-purple-muted mt-1 text-center">Period</div>
           </div>
         </div>
 
         {value.limits.amount && selectedPeriod && (
-          <div className="mt-4 p-4 bg-blue-900/20 border border-blue-800 rounded-lg">
+          <div className="mt-4 p-4 bg-purple-subtle border border-purple rounded-lg">
             <div className="flex items-start gap-2">
-              <span className="text-blue-400 text-lg">💡</span>
-              <div className="text-sm text-blue-300">
+              <span className="text-purple-accent text-lg">💡</span>
+              <div className="text-sm text-purple-muted">
                 This will allow up to{" "}
-                <span className="font-semibold">
+                <span className="font-semibold text-purple-accent">
                   {value.limits.amount} {selectedToken?.symbol || value.limits.currency}
                 </span>{" "}
                 to be transferred every {selectedPeriod.label.toLowerCase()}. The limit resets

@@ -1,47 +1,7 @@
 import type { ProposedTransaction } from "@opaque/agent";
 import axios from "axios";
 
-interface SessionEnclaveClient {
-  provisionKey(request: {
-    sessionAccountId: string;
-    privateKey: `0x${string}`;
-    userAddress: `0x${string}`;
-    adapterId: string;
-    deployParams: [
-      owner: `0x${string}`,
-      keyIds: string[],
-      xValues: bigint[],
-      yValues: bigint[]
-    ];
-  }): Promise<{
-    success: boolean;
-    sessionAccountAddress: `0x${string}`;
-  }>;
-}
-
-export interface ExecutorEnclaveClient {
-  signUserOperation(request: {
-    sessionAccountId: string;
-    preparedUserOperation: any;
-    proposedTx: ProposedTransaction;
-    policyRules: any[];
-    signals: any;
-    context: {
-      userAddress: `0x${string}`;
-      adapterId: string;
-      lastExecutionTime?: string;
-    };
-  }): Promise<{
-    allowed: boolean;
-    decision: string;
-    signature?: `0x${string}`;
-    userOpHash?: `0x${string}`;
-    reason?: string;
-    policyDecisions?: any[];
-  }>;
-}
-
-class EnclaveClientImpl implements SessionEnclaveClient, ExecutorEnclaveClient {
+class EnclaveClientImpl {
   private baseUrl: string;
 
   constructor(baseUrl?: string) {
@@ -73,21 +33,7 @@ class EnclaveClientImpl implements SessionEnclaveClient, ExecutorEnclaveClient {
     const serializedRequest = this.serializeBigInt(request);
     const jsonStr = JSON.stringify(serializedRequest);
 
-    console.log("[ENCLAVE CLIENT] Total length:", jsonStr.length);
-    console.log("[ENCLAVE CLIENT] Target URL:", this.baseUrl);
-    console.log(
-      "[ENCLAVE CLIENT] Request size:",
-      jsonStr.length,
-      "bytes"
-    );
-    console.log(
-      "[ENCLAVE CLIENT] Starting request at:",
-      new Date().toISOString()
-    );
-
     try {
-      console.log("[ENCLAVE CLIENT] 🚀 Calling axios...");
-
       const buffer = Buffer.from(jsonStr, "utf8");
       const contentLength = buffer.length;
 
@@ -106,7 +52,6 @@ class EnclaveClientImpl implements SessionEnclaveClient, ExecutorEnclaveClient {
         }
       );
 
-      console.log("[ENCLAVE CLIENT] ✅ Response received:", response.status);
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -135,122 +80,48 @@ class EnclaveClientImpl implements SessionEnclaveClient, ExecutorEnclaveClient {
     }
   }
 
-  async provisionKey(request: {
-    sessionAccountId: string;
-    privateKey: `0x${string}`;
-    userAddress: `0x${string}`;
-    adapterId: string;
-    deployParams: [
-      owner: `0x${string}`,
-      keyIds: string[],
-      xValues: bigint[],
-      yValues: bigint[]
-    ];
-  }): Promise<{
-    success: boolean;
-    sessionAccountAddress: `0x${string}`;
-  }> {
-    const enclaveRequest = {
-      type: "PROVISION_KEY",
-      sessionAccountId: request.sessionAccountId,
-      privateKey: request.privateKey,
-      userAddress: request.userAddress,
-      adapterId: request.adapterId,
-      deployParams: request.deployParams,
-    };
-
-    console.log(
-      `[ENCLAVE] Provisioning key for session: ${request.sessionAccountId}`
-    );
-    console.log(
-      `[ENCLAVE] User: ${request.userAddress}, Adapter: ${request.adapterId}`
-    );
-
-    const response = await this.sendRequest(enclaveRequest);
-
-    console.log(`[ENCLAVE] Response:`, {
-      success: response.success,
-      sessionAccountAddress: response.sessionAccountAddress,
+  async storePolicyConfig(userAddress: string, installationId: number, policyConfig: any): Promise<{ success: boolean; message: string }> {
+    const response = await this.sendRequest({
+      type: "STORE_POLICY_CONFIG",
+      userAddress,
+      installationId,
+      policyConfig,
     });
-
-    return {
-      success: response.success ?? true,
-      sessionAccountAddress: response.sessionAccountAddress,
-    };
+    return response;
   }
 
-  async signUserOperation(request: {
-    sessionAccountId: string;
-    preparedUserOperation: any;
-    proposedTx: ProposedTransaction;
-    policyRules: any[];
-    signals: any;
-    context: {
-      userAddress: `0x${string}`;
-      adapterId: string;
-      lastExecutionTime?: string;
+  async generateProof(request: {
+    userAddress: string;
+    installationId: number;
+    txData: {
+      amount: string;
+      recipient: string;
+      timestamp: number;
+      userAddress: string;
     };
   }): Promise<{
-    allowed: boolean;
-    decision: string;
-    signature?: `0x${string}`;
-    userOpHash?: `0x${string}`;
-    reason?: string;
-    policyDecisions?: any[];
+    success: boolean;
+    proof: string;
+    publicInputs: {
+      policySatisfied: string;
+      nullifier: string;
+      userAddressHash: string;
+    };
   }> {
-    console.log("[ENCLAVE CLIENT] 🔧 Building UserOp...");
-
-    // Build the prepared UserOp with ALL fields
-    const preparedUserOperation: any = {
-      sender: request.preparedUserOperation.sender,
-      nonce: request.preparedUserOperation.nonce,
-      callData: request.preparedUserOperation.callData,
-      callGasLimit: request.preparedUserOperation.callGasLimit,
-      verificationGasLimit: request.preparedUserOperation.verificationGasLimit,
-      preVerificationGas: request.preparedUserOperation.preVerificationGas,
-      maxFeePerGas: request.preparedUserOperation.maxFeePerGas,
-      maxPriorityFeePerGas: request.preparedUserOperation.maxPriorityFeePerGas,
-      signature: request.preparedUserOperation.signature || "0x",
-      paymaster: request.preparedUserOperation.paymaster,
-      paymasterVerificationGasLimit:
-        request.preparedUserOperation.paymasterVerificationGasLimit,
-      paymasterPostOpGasLimit: request.preparedUserOperation.paymasterPostOpGasLimit,
-      paymasterData: request.preparedUserOperation.paymasterData,
-    };
-
-    // Add factory fields if present (for account deployment)
-    if (request.preparedUserOperation.factory) {
-      preparedUserOperation.factory = request.preparedUserOperation.factory;
-      preparedUserOperation.factoryData = request.preparedUserOperation.factoryData;
-    }
-
-    console.log("[ENCLAVE CLIENT] Prepared UserOp:", {
-      sender: preparedUserOperation.sender,
-      hasFactory: !!preparedUserOperation.factory,
-      hasPaymaster: !!preparedUserOperation.paymaster,
-    });
-
     const enclaveRequest = {
-      type: "SIGN_TRANSACTION",
-      sessionAccountId: request.sessionAccountId,
-      proposedTx: request.proposedTx,
-      policyRules: request.policyRules,
-      signals: request.signals,
-      preparedUserOperation,
-      context: request.context,
+      type: "GENERATE_PROOF",
+      userAddress: request.userAddress,
+      installationId: request.installationId,
+      txData: request.txData,
     };
 
-    console.log("[ENCLAVE CLIENT] 📤 Sending request to enclave...");
+    console.log(`[ENCLAVE CLIENT] Generating proof for ${request.userAddress}:${request.installationId}`);
     const response = await this.sendRequest(enclaveRequest);
-    console.log("[ENCLAVE CLIENT] 📨 Received response from enclave");
 
     return {
-      allowed: response.allowed ?? false,
-      decision: response.decision || "ERROR",
-      signature: response.signature,
-      userOpHash: response.userOpHash,
-      reason: response.reason,
-      policyDecisions: response.policyDecisions,
+      success: response.success,
+      proof: response.proof,
+      publicInputs: response.publicInputs,
     };
   }
 }

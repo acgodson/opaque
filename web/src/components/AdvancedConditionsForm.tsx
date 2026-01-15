@@ -20,7 +20,6 @@ export function AdvancedConditionsForm({ value, onChange }: AdvancedConditionsFo
     const newEnabled = { ...enabledConditions, [condition]: !enabledConditions[condition] };
     setEnabledConditions(newEnabled);
 
-    // Remove condition from policy if disabled
     if (!newEnabled[condition]) {
       const newConditions = { ...value.conditions };
 
@@ -49,15 +48,14 @@ export function AdvancedConditionsForm({ value, onChange }: AdvancedConditionsFo
         conditions: Object.keys(newConditions).length > 0 ? newConditions : undefined,
       });
     } else {
-      // Initialize with default values when enabled
       const newConditions = { ...value.conditions };
 
       if (condition === "timeWindow") {
         newConditions.timeWindow = {
-          days: [1, 2, 3, 4, 5], // Weekdays by default
+          days: [1, 2, 3, 4, 5],
           startHour: 9,
           endHour: 17,
-          timezone: "America/New_York",
+          timezone: "UTC",
         };
       } else if (condition === "gasLimit") {
         if (!newConditions.signals) newConditions.signals = {};
@@ -175,17 +173,16 @@ export function AdvancedConditionsForm({ value, onChange }: AdvancedConditionsFo
 
   return (
     <div className="space-y-4">
-      {/* Time Window Restrictions */}
-      <div className="border border-zinc-800 rounded-lg p-4">
+      <div className="border border-purple rounded-lg p-4">
         <div className="flex items-center gap-2 mb-3">
           <input
             type="checkbox"
             id="enable-timewindow"
             checked={enabledConditions.timeWindow}
             onChange={() => handleConditionToggle("timeWindow")}
-            className="w-4 h-4 rounded border-zinc-600 text-blue-600 focus:ring-blue-500 focus:ring-offset-zinc-900 cursor-pointer"
+            className="w-4 h-4 rounded border-purple text-purple-primary focus:ring-purple-primary cursor-pointer accent-purple-500"
           />
-          <label htmlFor="enable-timewindow" className="text-sm font-medium cursor-pointer">
+          <label htmlFor="enable-timewindow" className="text-sm font-medium cursor-pointer text-white">
             Time window restrictions
           </label>
         </div>
@@ -193,16 +190,16 @@ export function AdvancedConditionsForm({ value, onChange }: AdvancedConditionsFo
         {enabledConditions.timeWindow && value.conditions?.timeWindow && (
           <div className="ml-6 space-y-3">
             <div>
-              <label className="block text-xs text-zinc-400 mb-2">Active Days</label>
+              <label className="block text-xs text-purple-muted mb-2">Active Days</label>
               <div className="flex flex-wrap gap-2">
                 {DAY_NAMES.map((day, index) => (
                   <button
                     key={index}
                     onClick={() => handleDayToggle(index)}
-                    className={`px-3 py-1 text-xs rounded ${
+                    className={`px-3 py-1 text-xs rounded transition-all ${
                       value.conditions!.timeWindow!.days.includes(index)
-                        ? "bg-blue-600 text-white"
-                        : "bg-zinc-800 text-zinc-400"
+                        ? "btn-purple text-white"
+                        : "btn-purple-outline"
                     }`}
                   >
                     {day.slice(0, 3)}
@@ -213,35 +210,35 @@ export function AdvancedConditionsForm({ value, onChange }: AdvancedConditionsFo
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs text-zinc-400 mb-1">Start Hour (24h)</label>
+                <label className="block text-xs text-purple-muted mb-1">Start Hour (UTC)</label>
                 <input
                   type="number"
                   min="0"
                   max="23"
                   value={value.conditions.timeWindow.startHour}
                   onChange={(e) => handleTimeChange("startHour", parseInt(e.target.value))}
-                  className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded text-sm"
+                  className="w-full px-3 py-2 input-purple rounded text-sm"
                 />
               </div>
               <div>
-                <label className="block text-xs text-zinc-400 mb-1">End Hour (24h)</label>
+                <label className="block text-xs text-purple-muted mb-1">End Hour (UTC)</label>
                 <input
                   type="number"
                   min="0"
                   max="23"
                   value={value.conditions.timeWindow.endHour}
                   onChange={(e) => handleTimeChange("endHour", parseInt(e.target.value))}
-                  className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded text-sm"
+                  className="w-full px-3 py-2 input-purple rounded text-sm"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs text-zinc-400 mb-1">Timezone</label>
+              <label className="block text-xs text-purple-muted mb-1">Timezone</label>
               <select
                 value={value.conditions.timeWindow.timezone}
                 onChange={(e) => handleTimezoneChange(e.target.value)}
-                className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded text-sm cursor-pointer"
+                className="w-full px-3 py-2 input-purple rounded text-sm cursor-pointer"
               >
                 {TIMEZONE_OPTIONS.map((tz) => (
                   <option key={tz} value={tz}>
@@ -254,50 +251,48 @@ export function AdvancedConditionsForm({ value, onChange }: AdvancedConditionsFo
         )}
       </div>
 
-      {/* Gas Price Limits */}
-      <div className="border border-zinc-800 rounded-lg p-4">
+      <div className="border border-purple rounded-lg p-4">
         <div className="flex items-center gap-2 mb-3">
           <input
             type="checkbox"
             id="enable-gas"
             checked={enabledConditions.gasLimit}
             onChange={() => handleConditionToggle("gasLimit")}
-            className="w-4 h-4 rounded border-zinc-600 text-blue-600 focus:ring-blue-500 focus:ring-offset-zinc-900 cursor-pointer"
+            className="w-4 h-4 rounded border-purple text-purple-primary focus:ring-purple-primary cursor-pointer accent-purple-500"
           />
-          <label htmlFor="enable-gas" className="text-sm font-medium cursor-pointer">
+          <label htmlFor="enable-gas" className="text-sm font-medium cursor-pointer text-white">
             Gas price limits
           </label>
         </div>
 
         {enabledConditions.gasLimit && value.conditions?.signals?.gas && (
           <div className="ml-6">
-            <label className="block text-xs text-zinc-400 mb-1">Maximum Gas Price (Gwei)</label>
+            <label className="block text-xs text-purple-muted mb-1">Maximum Gas Price (Gwei)</label>
             <input
               type="number"
               min="1"
               value={value.conditions.signals.gas.maxGwei || ""}
               onChange={(e) => handleGasLimitChange(parseInt(e.target.value) || 0)}
-              className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded text-sm"
+              className="w-full px-3 py-2 input-purple rounded text-sm"
               placeholder="50"
             />
-            <p className="text-xs text-zinc-500 mt-1">
+            <p className="text-xs text-purple-muted mt-1">
               Transactions will be blocked if gas price exceeds this limit
             </p>
           </div>
         )}
       </div>
 
-      {/* Recipient Whitelist */}
-      <div className="border border-zinc-800 rounded-lg p-4">
+      <div className="border border-purple rounded-lg p-4">
         <div className="flex items-center gap-2 mb-3">
           <input
             type="checkbox"
             id="enable-whitelist"
             checked={enabledConditions.whitelist}
             onChange={() => handleConditionToggle("whitelist")}
-            className="w-4 h-4 rounded border-zinc-600 text-blue-600 focus:ring-blue-500 focus:ring-offset-zinc-900 cursor-pointer"
+            className="w-4 h-4 rounded border-purple text-purple-primary focus:ring-purple-primary cursor-pointer accent-purple-500"
           />
-          <label htmlFor="enable-whitelist" className="text-sm font-medium cursor-pointer">
+          <label htmlFor="enable-whitelist" className="text-sm font-medium cursor-pointer text-white">
             Recipient whitelist
           </label>
         </div>
@@ -306,7 +301,7 @@ export function AdvancedConditionsForm({ value, onChange }: AdvancedConditionsFo
           <div className="ml-6 space-y-2">
             <button
               onClick={handleWhitelistAdd}
-              className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded"
+              className="px-3 py-1.5 btn-purple text-white text-xs rounded"
             >
               + Add Address
             </button>
@@ -316,9 +311,9 @@ export function AdvancedConditionsForm({ value, onChange }: AdvancedConditionsFo
                 {value.conditions.recipients.allowed.map((addr) => (
                   <div
                     key={addr}
-                    className="flex items-center justify-between p-2 bg-zinc-900 rounded text-xs"
+                    className="flex items-center justify-between p-2 bg-black/30 rounded text-xs"
                   >
-                    <span className="font-mono">{addr}</span>
+                    <span className="font-mono text-purple-muted">{addr}</span>
                     <button
                       onClick={() => handleWhitelistRemove(addr)}
                       className="text-red-400 hover:text-red-300 ml-2"
@@ -329,40 +324,39 @@ export function AdvancedConditionsForm({ value, onChange }: AdvancedConditionsFo
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-zinc-500">No whitelisted addresses yet</p>
+              <p className="text-xs text-purple-muted">No whitelisted addresses yet</p>
             )}
           </div>
         )}
       </div>
 
-      {/* Cooldown Period */}
-      <div className="border border-zinc-800 rounded-lg p-4">
+      <div className="border border-purple rounded-lg p-4">
         <div className="flex items-center gap-2 mb-3">
           <input
             type="checkbox"
             id="enable-cooldown"
             checked={enabledConditions.cooldown}
             onChange={() => handleConditionToggle("cooldown")}
-            className="w-4 h-4 rounded border-zinc-600 text-blue-600 focus:ring-blue-500 focus:ring-offset-zinc-900 cursor-pointer"
+            className="w-4 h-4 rounded border-purple text-purple-primary focus:ring-purple-primary cursor-pointer accent-purple-500"
           />
-          <label htmlFor="enable-cooldown" className="text-sm font-medium cursor-pointer">
+          <label htmlFor="enable-cooldown" className="text-sm font-medium cursor-pointer text-white">
             Cooldown period
           </label>
         </div>
 
         {enabledConditions.cooldown && value.conditions?.cooldown && (
           <div className="ml-6">
-            <label className="block text-xs text-zinc-400 mb-1">Cooldown Period (seconds)</label>
+            <label className="block text-xs text-purple-muted mb-1">Cooldown Period (seconds)</label>
             <input
               type="number"
               min="60"
               step="60"
               value={value.conditions.cooldown.seconds || ""}
               onChange={(e) => handleCooldownChange(parseInt(e.target.value) || 0)}
-              className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded text-sm"
+              className="w-full px-3 py-2 input-purple rounded text-sm"
               placeholder="3600"
             />
-            <p className="text-xs text-zinc-500 mt-1">
+            <p className="text-xs text-purple-muted mt-1">
               Minimum time between transactions (in seconds). 3600 = 1 hour
             </p>
           </div>

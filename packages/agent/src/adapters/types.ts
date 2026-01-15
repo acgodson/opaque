@@ -3,7 +3,6 @@ import { z } from "zod";
 export interface AdapterContext {
   userAddress: `0x${string}`;
   config: Record<string, any>;
-  permissionData: any;
   runtimeParams?: {
     recipient?: `0x${string}`;
     [key: string]: any;

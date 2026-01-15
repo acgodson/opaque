@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Opaque - Policy-Aware Automation",
-  description: "Policy-aware automation platform for MetaMask Advanced Permissions (ERC-7715)",
+  description: "ZK Policy For Automation Agents",
 };
 
 export default function RootLayout({
@@ -31,7 +31,7 @@ export default function RootLayout({
       >
         <TRPCProvider>
           <Navigation />
-          <main className="pt-16">
+          <main>
             {children}
           </main>
         </TRPCProvider>

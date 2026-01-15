@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@opaque/agent": "file:../packages/agent",
-    "@metamask/smart-accounts-kit": "^0.3.0",
+    "@privy-io/node": "^0.7.0",
     "@tanstack/react-query": "^5.56.2",
     "@trpc/client": "11.0.0-rc.532",
     "@trpc/react-query": "11.0.0-rc.532",
@@ -36,6 +36,7 @@
     "eslint-config-next": "16.1.1",
     "pg": "^8.16.3",
     "tailwindcss": "^4",
+    "@opentelemetry/api": "^1.9.0",
     "typescript": "^5"
   }
 }

@@ -1,189 +1,47 @@
 "use client";
 
-import { useState } from "react";
-import { AdapterCard, type Adapter } from "../../components/AdapterCard";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useWallet } from "../../hooks/useWallet";
-import { OnboardingDialog } from "../../components/OnboardingDialog";
 
-const AVAILABLE_ADAPTERS: Adapter[] = [
-  {
-    id: "transfer-bot",
-    name: "Transfer Bot",
-    description: "Transfers 0.1 USDC or 0.1 ETH per execution. Configure max amount per period (daily/weekly/monthly) with policies for spending limits and recipient whitelists.",
-    category: "Payments & Transfers",
-    features: [
-      "0.1 USDC or 0.1 ETH per transfer",
-      "Max amount per period control",
-      "USDC and ETH support",
-      "Recipient whitelist",
-      "Period-based limits",
-    ],
-  },
-  {
-    id: "ai-savings-agent",
-    name: "AI Savings Agent",
-    description: "Automatically transfers funds to your savings vault or address on a schedule. Set your savings amount, frequency, and target address. Policies control spending limits and ensure funds only go to your trusted vault.",
-    category: "AI Automation",
-    features: [
-      "Automated savings transfers",
-      "Configurable amount per transfer",
-      "Flexible schedules (daily/weekly/monthly)",
-      "Savings vault/address targeting",
-      "Policy-controlled spending limits",
-    ],
-    comingSoon: true,
-  },
-];
-
-export default function AdaptersMarketplace() {
+export default function NewAdapterPage() {
+  const router = useRouter();
   const { isConnected, connect, isConnecting } = useWallet();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  const categories = Array.from(new Set(AVAILABLE_ADAPTERS.map((a) => a.category)));
-
-  const filteredAdapters = AVAILABLE_ADAPTERS.filter((adapter) => {
-    const matchesSearch =
-      adapter.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      adapter.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = !selectedCategory || adapter.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  useEffect(() => {
+    if (isConnected) {
+      router.push("/adapters/mantle-transfer/policy");
+    }
+  }, [isConnected, router]);
 
   return (
-    <>
-      <OnboardingDialog />
-      <div className="min-h-screen bg-black text-white">
-      <div className="border-b border-zinc-800 bg-gradient-to-b from-zinc-900 to-black -mt-16">
-        <div className="max-w-7xl mx-auto px-6 py-12">
-          <div className="max-w-3xl">
-            <h1 className="text-4xl font-bold mb-3">
-              Automation Adapters
-            </h1>
-            <p className="text-lg text-zinc-400 mb-6">
-              Install pre-built automation adapters with granular policy controls.
-              Each adapter runs with MetaMask Advanced Permissions and opaque safety policies.
-            </p>
+    <div className="min-h-screen relative">
+      <div className="grid-bg" />
+      <div className="gradient-overlay" />
 
-            {!isConnected && (
-              <button
-                onClick={connect}
-                disabled={isConnecting}
-                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg font-medium transition-colors inline-flex items-center gap-2"
-              >
-                {isConnecting ? "Connecting..." : "Connect Wallet to Get Started"}
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                </svg>
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="border-b border-zinc-800 bg-black sticky top-16 z-40">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-            {/* Search Bar */}
-            <div className="w-full md:w-96">
-              <div className="relative">
-                <svg
-                  className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-                <input
-                  type="text"
-                  placeholder="Search adapters..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-zinc-900 border border-zinc-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-            </div>
-
-            {/* Category Filters */}
-            <div className="flex gap-2 flex-wrap">
-              <button
-                onClick={() => setSelectedCategory(null)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  selectedCategory === null
-                    ? "bg-blue-600 text-white"
-                    : "bg-zinc-900 text-zinc-400 hover:bg-zinc-800"
-                }`}
-              >
-                All
-              </button>
-              {categories.map((category) => (
-                <button
-                  key={category}
-                  onClick={() => setSelectedCategory(category)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    selectedCategory === category
-                      ? "bg-blue-600 text-white"
-                      : "bg-zinc-900 text-zinc-400 hover:bg-zinc-800"
-                  }`}
-                >
-                  {category}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        {filteredAdapters.length === 0 ? (
-          <div className="text-center py-12">
-            <h3 className="text-lg font-semibold mb-2">No adapters found</h3>
-            <p className="text-zinc-400 text-sm">Try adjusting your search or filters</p>
-          </div>
-        ) : (
-          <>
-            <div className="flex items-center justify-between mb-6">
-              <p className="text-zinc-400">
-                {filteredAdapters.length} adapter{filteredAdapters.length !== 1 ? "s" : ""} available
-              </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredAdapters.map((adapter) => (
-                <AdapterCard key={adapter.id} adapter={adapter} />
-              ))}
-            </div>
-          </>
-        )}
-      </div>
-
-      <div className="border-t border-zinc-800 bg-zinc-900/50 mt-12">
-        <div className="max-w-7xl mx-auto px-6 py-8 text-center">
-          <h2 className="text-xl font-bold mb-2">Want to build your own adapter?</h2>
-          <p className="text-zinc-400 text-sm mb-4 max-w-2xl mx-auto">
-            opaque is open-source and extensible. Create custom automation adapters
-            and share them with the community.
+      <div className="relative z-10 flex items-center justify-center min-h-screen">
+        <div className="text-center max-w-md">
+          <h1 className="text-3xl font-bold mb-4 text-white">Create New Adapter</h1>
+          <p className="text-purple-muted mb-8">
+            Connect your wallet to configure a new Mantle Transfer adapter with ZK-policy protection.
           </p>
-          <a
-            href="https://github.com/acgodson/opaque"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-lg font-medium transition-colors"
-          >
-            View Documentation
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
-              <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
-            </svg>
-          </a>
+
+          {!isConnected ? (
+            <button
+              onClick={connect}
+              disabled={isConnecting}
+              className="px-6 py-3 btn-purple rounded-lg font-medium text-white inline-flex items-center gap-2"
+            >
+              {isConnecting ? "Connecting..." : "Connect Wallet"}
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </button>
+          ) : (
+            <div className="text-purple-muted">Redirecting to policy builder...</div>
+          )}
         </div>
       </div>
     </div>
-    </>
   );
 }

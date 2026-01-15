@@ -37,8 +37,8 @@ export function startServer() {
     socket.on("end", () => console.log("Client disconnected"));
   });
 
-  server.listen(NODE_PORT, "127.0.0.1", () => {
-    console.log(`🔒 Node.js server listening on 127.0.0.1:${NODE_PORT}`);
+  server.listen(NODE_PORT, "0.0.0.0", () => {
+    console.log(`🔒 Node.js server listening on 0.0.0.0:${NODE_PORT}`);
   });
 
   return server;

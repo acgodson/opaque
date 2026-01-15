@@ -4,9 +4,26 @@ export interface PolicyContext {
   userAddress: `0x${string}`;
   adapterId: string;
   proposedTx: ProposedTransaction;
-  signals: Record<string, any>;
   timestamp: Date;
   lastExecutionTime?: Date;
+}
+
+export interface PolicyConfig {
+  maxAmount?: {
+    enabled: boolean;
+    limit: string; // BigInt as string for JSON compatibility
+  };
+  timeWindow?: {
+    enabled: boolean;
+    startHour: number;
+    endHour: number;
+  };
+  whitelist?: {
+    enabled: boolean;
+    root?: string;
+    path?: string[];
+    index?: number;
+  };
 }
 
 export interface PolicyResult {
@@ -22,10 +39,10 @@ export interface PolicyRule {
   name: string;
   description: string;
   defaultConfig: Record<string, any>;
-  evaluate: (
+  prepareConfig: (
     context: PolicyContext,
     config: Record<string, any>
-  ) => Promise<PolicyResult>;
+  ) => Promise<Partial<PolicyConfig>>;
 }
 
 export interface EvaluationResult {

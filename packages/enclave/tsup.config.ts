@@ -6,8 +6,12 @@ export default defineConfig({
   format: ["esm"],
   outDir: "dist",
   bundle: true,
-  noExternal: [/.*/],
-  external: [...builtinModules].map(m => `node:${m}`),
+  noExternal: [/^(?!@aztec|@noir-lang).*/],
+  external: [
+    ...builtinModules.map(m => `node:${m}`),
+    "@aztec/bb.js",
+    "@noir-lang/noir_js",
+  ],
   platform: "node",
   target: "node20",
   splitting: false,
@@ -17,7 +21,7 @@ export default defineConfig({
   outExtension: () => ({ js: ".js" }),
   esbuildOptions(options) {
     options.banner = {
-      js: "import { createRequire } from 'module';const require = createRequire(import.meta.url);",
+      js: "import { createRequire } from 'module';import { fileURLToPath as _fileURLToPath } from 'url';import { dirname as _dirname } from 'path';const require = createRequire(import.meta.url);const __filename = _fileURLToPath(import.meta.url);const __dirname = _dirname(__filename);",
     };
   },
 });
