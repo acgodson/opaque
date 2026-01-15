@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  enclave:
+    build:
+      context: .
+      dockerfile: Dockerfile.enclave
+    ports:
+      - "8001:5000"
+    restart: unless-stopped
+
+  agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.agent
+    ports:
+      - "3000:3000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - AGENT_PRIVATE_KEY=${AGENT_PRIVATE_KEY}
+      - OPAQUE_USER_ADDRESS=${OPAQUE_USER_ADDRESS}
+      - OPAQUE_INSTALLATION_ID=${OPAQUE_INSTALLATION_ID}
+      - OPAQUE_VERIFIER_ADDRESS=${OPAQUE_VERIFIER_ADDRESS}
+      - OPAQUE_TOKEN_ADDRESS=${OPAQUE_TOKEN_ADDRESS}
+      - OPAQUE_ENCLAVE_URL=http://enclave:5000
+    depends_on:
+      - enclave
+    restart: unless-stopped

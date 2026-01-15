@@ -1,0 +1,25 @@
+FROM --platform=linux/amd64 oven/bun:1-slim
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+
+COPY package.json bun.lockb ./
+COPY packages/plugin-opaque/package.json ./packages/plugin-opaque/
+COPY packages/agent/package.json ./packages/agent/
+COPY elizaos-agent/package.json ./elizaos-agent/
+
+RUN bun install --frozen-lockfile
+
+COPY packages/plugin-opaque ./packages/plugin-opaque
+COPY packages/agent ./packages/agent
+COPY elizaos-agent ./elizaos-agent
+
+RUN cd packages/plugin-opaque && bun run build
+
+WORKDIR /app/elizaos-agent
+
+EXPOSE 3000
+
+CMD ["bun", "run", "start"]
+ 
