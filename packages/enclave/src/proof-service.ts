@@ -1,6 +1,6 @@
 import type { Noir } from "@noir-lang/noir_js";
 import type { UltraHonkBackend } from "@aztec/bb.js";
-import { generatePolicyProof, getCurrentTimestamp, type PolicyConfig, type TransactionData, type ProofResult } from "./proof-generator.js";
+import { generatePolicyProof, type PolicyConfig, type TransactionData, type ProofResult } from "./proof-generator.js";
 import { policyStore } from "./policy-store.js";
 
 interface ProofServiceConfig {

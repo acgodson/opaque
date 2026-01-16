@@ -1,6 +1,6 @@
 {
   "name": "@opaque/enclave",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "type": "module",
   "main": "./dist/index.js",
   "scripts": {
@@ -9,7 +9,8 @@
   },
   "dependencies": {
     "@aztec/bb.js": "1.2.0",
-    "@noir-lang/noir_js": "1.0.0-beta.11"
+    "@noir-lang/noir_js": "1.0.0-beta.11",
+    "ethers": "^6.13.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

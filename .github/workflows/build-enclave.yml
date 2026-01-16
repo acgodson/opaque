@@ -1,0 +1,80 @@
+name: Build Opaque Enclave
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'packages/enclave/**'
+      - '!packages/enclave/**/key-store.ts'  # Exclude key-store.ts
+      - '.github/workflows/build-enclave.yml'
+  pull_request:
+    paths:
+      - 'packages/enclave/**'
+      - '!packages/enclave/**/key-store.ts'  # Exclude key-store.ts
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/opaque-enclave
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: packages/enclave
+        run: npm ci
+
+      - name: Build TypeScript
+        working-directory: packages/enclave
+        run: npm run build
+
+      - name: Extract version from package.json
+        id: package-version
+        working-directory: packages/enclave
+        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=semver,pattern={{version}},value=${{ steps.package-version.outputs.version }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ steps.package-version.outputs.version }}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: packages/enclave
+          file: packages/enclave/Dockerfile.enclave
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Output image details
+        run: |
+          echo "Image version: ${{ steps.package-version.outputs.version }}"
+          echo "Image tags: ${{ steps.meta.outputs.tags }}"

@@ -55,20 +55,26 @@ export async function generatePolicyProof(
         const bb = await Barretenberg.new({ threads: 1 });
         console.log("[PROOF-GEN] Barretenberg initialized successfully");
 
-        console.log("[PROOF-GEN] Step 3: Creating Field elements");
+        console.log("[PROOF-GEN] Step 3: Converting wei to whole tokens for u64 compatibility");
+        const WEI_PER_TOKEN = BigInt(10 ** 18);
+        const wholeTokenAmount = tx.amount / WEI_PER_TOKEN;
+        const wholeTokenMaxAmount = BigInt(config.maxAmount?.limit || 0) / WEI_PER_TOKEN;
+        console.log("[PROOF-GEN] Whole token amount:", wholeTokenAmount.toString(), "(wei:", tx.amount.toString(), ")");
+
+        console.log("[PROOF-GEN] Step 4: Creating Field elements");
         const timestampFr = new Fr(BigInt(tx.timestamp));
         console.log("[PROOF-GEN] Timestamp Fr created");
         
         const recipientFr = new Fr(BigInt(tx.recipient));
         console.log("[PROOF-GEN] Recipient Fr created");
         
-        const amountFr = new Fr(tx.amount);
-        console.log("[PROOF-GEN] Amount Fr created");
+        const amountFr = new Fr(wholeTokenAmount);
+        console.log("[PROOF-GEN] Amount Fr created (whole tokens)");
         
         const userHashFr = new Fr(BigInt(userAddressHash));
         console.log("[PROOF-GEN] User hash Fr created");
 
-        console.log("[PROOF-GEN] Step 4: Computing Pedersen hash for nullifier");
+        console.log("[PROOF-GEN] Step 5: Computing Pedersen hash for nullifier");
         const nullifierFr = await bb.pedersenHash(
             [timestampFr, recipientFr, amountFr, userHashFr],
             0
@@ -76,13 +82,14 @@ export async function generatePolicyProof(
         const nullifier = nullifierFr.toString();
         console.log("[PROOF-GEN] Nullifier computed:", nullifier.substring(0, 20) + "...");
 
-        console.log("[PROOF-GEN] Step 5: Preparing circuit inputs");
+        console.log("[PROOF-GEN] Step 6: Preparing circuit inputs");
+        
         const inputs = {
-            tx_amount: tx.amount.toString(),
+            tx_amount: wholeTokenAmount.toString(),
             tx_recipient: BigInt(tx.recipient).toString(),
             tx_timestamp: tx.timestamp.toString(),
 
-            max_amount: (config.maxAmount?.limit || 0).toString(),
+            max_amount: wholeTokenMaxAmount.toString(),
             allowed_start_hour: (config.timeWindow?.startHour || 0).toString(),
             allowed_end_hour: (config.timeWindow?.endHour || 24).toString(),
 
@@ -100,17 +107,17 @@ export async function generatePolicyProof(
         };
         console.log("[PROOF-GEN] Circuit inputs prepared");
 
-        console.log("[PROOF-GEN] Step 6: Executing Noir circuit");
+        console.log("[PROOF-GEN] Step 7: Executing Noir circuit");
         const { witness } = await noir.execute(inputs);
         console.log("[PROOF-GEN] Noir circuit executed, witness generated");
 
-        console.log("[PROOF-GEN] Step 7: Generating proof with backend");
+        console.log("[PROOF-GEN] Step 8: Generating proof with backend");
         const { proof, publicInputs } = await backend.generateProof(witness, {
             keccak: true,
         });
         console.log("[PROOF-GEN] Proof generated successfully, length:", proof.length);
 
-        console.log("[PROOF-GEN] Step 8: Cleaning up Barretenberg");
+        console.log("[PROOF-GEN] Step 9: Cleaning up Barretenberg");
         await bb.destroy();
         console.log("[PROOF-GEN] Barretenberg destroyed");
 
