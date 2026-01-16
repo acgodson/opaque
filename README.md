@@ -28,7 +28,7 @@ This makes context manipulation attacks (prompt injection, memory poisoning) irr
 
 🎬 **[Watch Demo Video](https://vimeo.com/1154584994)** (4 min)
 
-📊 **[View Pitch Deck](https://acgodson.github.io/opaque/pitch.html)**
+📊 **[View Pitch Deck](https://opaque-web-nine.vercel.app/pitch.html)**
 
 🌐 **[Live App](https://opaque-web.vercel.app)**
 
@@ -40,7 +40,7 @@ This makes context manipulation attacks (prompt injection, memory poisoning) irr
 | Enclave | ZK proof generation (Noir + Barretenberg) | [packages/enclave/](./packages/enclave) |
 | ElizaOS Plugin | Agent integration for proof requests | [packages/plugin-opaque/](./packages/plugin-opaque) |
 | Smart Contracts | Circuits & On-chain verifier (Mantle Sepolia) | [mantle_hardhat/](./mantle_hardhat) |
-| API Reference | Enclave endpoints | [Playground](https://opaque-web.vercel.app/playground) |
+| API Reference | Enclave endpoints | [Playground](https://opaque-web-nine.vercel.app/playground) |
 
 ## Demo Configuration
 
@@ -71,7 +71,7 @@ See [ElizaOS docs](https://docs.elizaos.ai) for detailed agent setup.
 
 ### 3. Test via Playground
 
-Use the Opaque [Playground](https://opaque-web.vercel.app/playground) to test policy storage and proof generation.
+Use the Opaque [Playground](https://opaque-web.vercel.app-nine/playground) to test policy storage and proof generation.
 
 ## Self-Hosted Enclave
 
@@ -141,7 +141,7 @@ See [ATTESTATION.md](./ATTESTATION.md) for verification details.
 | Resource | Link |
 |----------|------|
 | Demo Video | [vimeo.com/1154584994](https://vimeo.com/1154584994) |
-| Pitch Deck | [pitch.html](https://acgodson.github.io/opaque/pitch.html) |
+| Pitch Deck | [pitch.html](https://opaque-web-nine.vercel.app/pitch.html) |
 | ElizaOS Plugin | [@tinybirdpro/plugin-opaque](https://www.npmjs.com/package/@tinybirdpro/plugin-opaque) |
 | Attestation Docs | [ATTESTATION.md](./ATTESTATION.md) |
 | Noir Circuit | [mantle_hardhat/noir/](./mantle_hardhat/noir) |
