@@ -39,7 +39,7 @@ const FEATURED_ADAPTER: AdapterDisplay = {
   isActive: true,
   isPublic: true,
   isFeatured: true,
-  deploymentUrl: "http://localhost:3000",
+  deploymentUrl: "/demo",
   tokenAddress: MOCK_TOKEN.address,
   tokenSymbol: MOCK_TOKEN.symbol,
   tokenDecimals: MOCK_TOKEN.decimals,
@@ -260,9 +260,17 @@ function AdapterCard({
         {adapter.deploymentUrl && (
           <a
             href={adapter.deploymentUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              if (!adapter.deploymentUrl?.startsWith('http')) {
+                // Internal route - let Next.js handle it
+                e.stopPropagation();
+              } else {
+                // External URL - open in new tab
+                e.stopPropagation();
+              }
+            }}
+            target={adapter.deploymentUrl.startsWith('http') ? "_blank" : undefined}
+            rel={adapter.deploymentUrl.startsWith('http') ? "noopener noreferrer" : undefined}
             className="text-xs text-purple-accent hover:underline"
           >
             Agent →

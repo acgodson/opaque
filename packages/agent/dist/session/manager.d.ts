@@ -381,6 +381,9 @@ declare class SessionManager {
             withdrawals?: import("viem").Withdrawal[] | undefined | undefined;
             withdrawalsRoot?: `0x${string}` | undefined;
             transactions: includeTransactions extends true ? ({
+                value: bigint;
+                type: "legacy";
+                to: import("viem").Address | null;
                 yParity?: undefined | undefined;
                 from: import("viem").Address;
                 gas: bigint;
@@ -389,15 +392,12 @@ declare class SessionManager {
                 nonce: number;
                 r: import("viem").Hex;
                 s: import("viem").Hex;
-                to: import("viem").Address | null;
                 typeHex: import("viem").Hex | null;
                 v: bigint;
-                value: bigint;
                 accessList?: undefined | undefined;
                 authorizationList?: undefined | undefined;
                 blobVersionedHashes?: undefined | undefined;
                 chainId?: number | undefined;
-                type: "legacy";
                 gasPrice: bigint;
                 maxFeePerBlobGas?: undefined | undefined;
                 maxFeePerGas?: undefined | undefined;
@@ -406,6 +406,9 @@ declare class SessionManager {
                 blockNumber: (blockTag extends "pending" ? true : false) extends infer T_1 ? T_1 extends (blockTag extends "pending" ? true : false) ? T_1 extends true ? null : bigint : never : never;
                 transactionIndex: (blockTag extends "pending" ? true : false) extends infer T_2 ? T_2 extends (blockTag extends "pending" ? true : false) ? T_2 extends true ? null : number : never : never;
             } | {
+                value: bigint;
+                type: "eip2930";
+                to: import("viem").Address | null;
                 yParity: number;
                 from: import("viem").Address;
                 gas: bigint;
@@ -414,15 +417,12 @@ declare class SessionManager {
                 nonce: number;
                 r: import("viem").Hex;
                 s: import("viem").Hex;
-                to: import("viem").Address | null;
                 typeHex: import("viem").Hex | null;
                 v: bigint;
-                value: bigint;
                 accessList: import("viem").AccessList;
                 authorizationList?: undefined | undefined;
                 blobVersionedHashes?: undefined | undefined;
                 chainId: number;
-                type: "eip2930";
                 gasPrice: bigint;
                 maxFeePerBlobGas?: undefined | undefined;
                 maxFeePerGas?: undefined | undefined;
@@ -431,6 +431,9 @@ declare class SessionManager {
                 blockNumber: (blockTag extends "pending" ? true : false) extends infer T_4 ? T_4 extends (blockTag extends "pending" ? true : false) ? T_4 extends true ? null : bigint : never : never;
                 transactionIndex: (blockTag extends "pending" ? true : false) extends infer T_5 ? T_5 extends (blockTag extends "pending" ? true : false) ? T_5 extends true ? null : number : never : never;
             } | {
+                value: bigint;
+                type: "eip1559";
+                to: import("viem").Address | null;
                 yParity: number;
                 from: import("viem").Address;
                 gas: bigint;
@@ -439,15 +442,12 @@ declare class SessionManager {
                 nonce: number;
                 r: import("viem").Hex;
                 s: import("viem").Hex;
-                to: import("viem").Address | null;
                 typeHex: import("viem").Hex | null;
                 v: bigint;
-                value: bigint;
                 accessList: import("viem").AccessList;
                 authorizationList?: undefined | undefined;
                 blobVersionedHashes?: undefined | undefined;
                 chainId: number;
-                type: "eip1559";
                 gasPrice?: undefined | undefined;
                 maxFeePerBlobGas?: undefined | undefined;
                 maxFeePerGas: bigint;
@@ -456,6 +456,9 @@ declare class SessionManager {
                 blockNumber: (blockTag extends "pending" ? true : false) extends infer T_7 ? T_7 extends (blockTag extends "pending" ? true : false) ? T_7 extends true ? null : bigint : never : never;
                 transactionIndex: (blockTag extends "pending" ? true : false) extends infer T_8 ? T_8 extends (blockTag extends "pending" ? true : false) ? T_8 extends true ? null : number : never : never;
             } | {
+                value: bigint;
+                type: "eip4844";
+                to: import("viem").Address | null;
                 yParity: number;
                 from: import("viem").Address;
                 gas: bigint;
@@ -464,15 +467,12 @@ declare class SessionManager {
                 nonce: number;
                 r: import("viem").Hex;
                 s: import("viem").Hex;
-                to: import("viem").Address | null;
                 typeHex: import("viem").Hex | null;
                 v: bigint;
-                value: bigint;
                 accessList: import("viem").AccessList;
                 authorizationList?: undefined | undefined;
                 blobVersionedHashes: readonly import("viem").Hex[];
                 chainId: number;
-                type: "eip4844";
                 gasPrice?: undefined | undefined;
                 maxFeePerBlobGas: bigint;
                 maxFeePerGas: bigint;
@@ -481,6 +481,9 @@ declare class SessionManager {
                 blockNumber: (blockTag extends "pending" ? true : false) extends infer T_10 ? T_10 extends (blockTag extends "pending" ? true : false) ? T_10 extends true ? null : bigint : never : never;
                 transactionIndex: (blockTag extends "pending" ? true : false) extends infer T_11 ? T_11 extends (blockTag extends "pending" ? true : false) ? T_11 extends true ? null : number : never : never;
             } | {
+                value: bigint;
+                type: "eip7702";
+                to: import("viem").Address | null;
                 yParity: number;
                 from: import("viem").Address;
                 gas: bigint;
@@ -489,15 +492,12 @@ declare class SessionManager {
                 nonce: number;
                 r: import("viem").Hex;
                 s: import("viem").Hex;
-                to: import("viem").Address | null;
                 typeHex: import("viem").Hex | null;
                 v: bigint;
-                value: bigint;
                 accessList: import("viem").AccessList;
                 authorizationList: import("viem").SignedAuthorizationList;
                 blobVersionedHashes?: undefined | undefined;
                 chainId: number;
-                type: "eip7702";
                 gasPrice?: undefined | undefined;
                 maxFeePerBlobGas?: undefined | undefined;
                 maxFeePerGas: bigint;
@@ -579,6 +579,9 @@ declare class SessionManager {
         } | undefined) => Promise<import("viem").EstimateMaxPriorityFeePerGasReturnType>;
         getStorageAt: (args: import("viem").GetStorageAtParameters) => Promise<import("viem").GetStorageAtReturnType>;
         getTransaction: <blockTag extends import("viem").BlockTag = "latest">(args: import("viem").GetTransactionParameters<blockTag>) => Promise<{
+            value: bigint;
+            type: "legacy";
+            to: import("viem").Address | null;
             yParity?: undefined | undefined;
             from: import("viem").Address;
             gas: bigint;
@@ -587,15 +590,12 @@ declare class SessionManager {
             nonce: number;
             r: import("viem").Hex;
             s: import("viem").Hex;
-            to: import("viem").Address | null;
             typeHex: import("viem").Hex | null;
             v: bigint;
-            value: bigint;
             accessList?: undefined | undefined;
             authorizationList?: undefined | undefined;
             blobVersionedHashes?: undefined | undefined;
             chainId?: number | undefined;
-            type: "legacy";
             gasPrice: bigint;
             maxFeePerBlobGas?: undefined | undefined;
             maxFeePerGas?: undefined | undefined;
@@ -604,6 +604,9 @@ declare class SessionManager {
             blockNumber: (blockTag extends "pending" ? true : false) extends infer T_1 ? T_1 extends (blockTag extends "pending" ? true : false) ? T_1 extends true ? null : bigint : never : never;
             transactionIndex: (blockTag extends "pending" ? true : false) extends infer T_2 ? T_2 extends (blockTag extends "pending" ? true : false) ? T_2 extends true ? null : number : never : never;
         } | {
+            value: bigint;
+            type: "eip2930";
+            to: import("viem").Address | null;
             yParity: number;
             from: import("viem").Address;
             gas: bigint;
@@ -612,15 +615,12 @@ declare class SessionManager {
             nonce: number;
             r: import("viem").Hex;
             s: import("viem").Hex;
-            to: import("viem").Address | null;
             typeHex: import("viem").Hex | null;
             v: bigint;
-            value: bigint;
             accessList: import("viem").AccessList;
             authorizationList?: undefined | undefined;
             blobVersionedHashes?: undefined | undefined;
             chainId: number;
-            type: "eip2930";
             gasPrice: bigint;
             maxFeePerBlobGas?: undefined | undefined;
             maxFeePerGas?: undefined | undefined;
@@ -629,6 +629,9 @@ declare class SessionManager {
             blockNumber: (blockTag extends "pending" ? true : false) extends infer T_4 ? T_4 extends (blockTag extends "pending" ? true : false) ? T_4 extends true ? null : bigint : never : never;
             transactionIndex: (blockTag extends "pending" ? true : false) extends infer T_5 ? T_5 extends (blockTag extends "pending" ? true : false) ? T_5 extends true ? null : number : never : never;
         } | {
+            value: bigint;
+            type: "eip1559";
+            to: import("viem").Address | null;
             yParity: number;
             from: import("viem").Address;
             gas: bigint;
@@ -637,15 +640,12 @@ declare class SessionManager {
             nonce: number;
             r: import("viem").Hex;
             s: import("viem").Hex;
-            to: import("viem").Address | null;
             typeHex: import("viem").Hex | null;
             v: bigint;
-            value: bigint;
             accessList: import("viem").AccessList;
             authorizationList?: undefined | undefined;
             blobVersionedHashes?: undefined | undefined;
             chainId: number;
-            type: "eip1559";
             gasPrice?: undefined | undefined;
             maxFeePerBlobGas?: undefined | undefined;
             maxFeePerGas: bigint;
@@ -654,6 +654,9 @@ declare class SessionManager {
             blockNumber: (blockTag extends "pending" ? true : false) extends infer T_7 ? T_7 extends (blockTag extends "pending" ? true : false) ? T_7 extends true ? null : bigint : never : never;
             transactionIndex: (blockTag extends "pending" ? true : false) extends infer T_8 ? T_8 extends (blockTag extends "pending" ? true : false) ? T_8 extends true ? null : number : never : never;
         } | {
+            value: bigint;
+            type: "eip4844";
+            to: import("viem").Address | null;
             yParity: number;
             from: import("viem").Address;
             gas: bigint;
@@ -662,15 +665,12 @@ declare class SessionManager {
             nonce: number;
             r: import("viem").Hex;
             s: import("viem").Hex;
-            to: import("viem").Address | null;
             typeHex: import("viem").Hex | null;
             v: bigint;
-            value: bigint;
             accessList: import("viem").AccessList;
             authorizationList?: undefined | undefined;
             blobVersionedHashes: readonly import("viem").Hex[];
             chainId: number;
-            type: "eip4844";
             gasPrice?: undefined | undefined;
             maxFeePerBlobGas: bigint;
             maxFeePerGas: bigint;
@@ -679,6 +679,9 @@ declare class SessionManager {
             blockNumber: (blockTag extends "pending" ? true : false) extends infer T_10 ? T_10 extends (blockTag extends "pending" ? true : false) ? T_10 extends true ? null : bigint : never : never;
             transactionIndex: (blockTag extends "pending" ? true : false) extends infer T_11 ? T_11 extends (blockTag extends "pending" ? true : false) ? T_11 extends true ? null : number : never : never;
         } | {
+            value: bigint;
+            type: "eip7702";
+            to: import("viem").Address | null;
             yParity: number;
             from: import("viem").Address;
             gas: bigint;
@@ -687,15 +690,12 @@ declare class SessionManager {
             nonce: number;
             r: import("viem").Hex;
             s: import("viem").Hex;
-            to: import("viem").Address | null;
             typeHex: import("viem").Hex | null;
             v: bigint;
-            value: bigint;
             accessList: import("viem").AccessList;
             authorizationList: import("viem").SignedAuthorizationList;
             blobVersionedHashes?: undefined | undefined;
             chainId: number;
-            type: "eip7702";
             gasPrice?: undefined | undefined;
             maxFeePerBlobGas?: undefined | undefined;
             maxFeePerGas: bigint;
@@ -4248,7 +4248,7 @@ declare class SessionManager {
             authorizationList: import("viem").TransactionSerializableEIP7702["authorizationList"];
         } ? "eip7702" : never) | (request["type"] extends string | undefined ? Extract<request["type"], string> : never)>) ? T_12 extends "eip7702" ? import("viem").TransactionRequestEIP7702 : never : never : never)>> & {
             chainId?: number | undefined;
-        }, (request["parameters"] extends readonly import("viem").PrepareTransactionRequestParameterType[] ? request["parameters"][number] : "fees" | "gas" | "nonce" | "blobVersionedHashes" | "chainId" | "type") extends infer T_13 ? T_13 extends (request["parameters"] extends readonly import("viem").PrepareTransactionRequestParameterType[] ? request["parameters"][number] : "fees" | "gas" | "nonce" | "blobVersionedHashes" | "chainId" | "type") ? T_13 extends "fees" ? "gasPrice" | "maxFeePerGas" | "maxPriorityFeePerGas" : T_13 : never : never> & (unknown extends request["kzg"] ? {} : Pick<request, "kzg">) extends infer T ? { [K in keyof T]: T[K]; } : never>;
+        }, (request["parameters"] extends readonly import("viem").PrepareTransactionRequestParameterType[] ? request["parameters"][number] : "type" | "fees" | "gas" | "nonce" | "blobVersionedHashes" | "chainId") extends infer T_13 ? T_13 extends (request["parameters"] extends readonly import("viem").PrepareTransactionRequestParameterType[] ? request["parameters"][number] : "type" | "fees" | "gas" | "nonce" | "blobVersionedHashes" | "chainId") ? T_13 extends "fees" ? "gasPrice" | "maxFeePerGas" | "maxPriorityFeePerGas" : T_13 : never : never> & (unknown extends request["kzg"] ? {} : Pick<request, "kzg">) extends infer T ? { [K in keyof T]: T[K]; } : never>;
         readContract: <const abi extends import("viem").Abi | readonly unknown[], functionName extends import("viem").ContractFunctionName<abi, "pure" | "view">, const args extends import("viem").ContractFunctionArgs<abi, "pure" | "view", functionName>>(args: import("viem").ReadContractParameters<abi, functionName, args>) => Promise<import("viem").ReadContractReturnType<abi, functionName, args>>;
         sendRawTransaction: (args: import("viem").SendRawTransactionParameters) => Promise<import("viem").SendRawTransactionReturnType>;
         sendRawTransactionSync: (args: import("viem").SendRawTransactionSyncParameters) => Promise<import("viem").TransactionReceipt>;

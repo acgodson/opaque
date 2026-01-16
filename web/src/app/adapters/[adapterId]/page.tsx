@@ -149,9 +149,7 @@ function FeaturedAdapterDetail() {
             </p>
 
             <a
-              href="http://localhost:3000"
-              target="_blank"
-              rel="noopener noreferrer"
+              href="/demo"
               className="inline-flex items-center gap-2 px-4 py-2 btn-purple rounded-lg text-sm text-white"
             >
               Open Agent Chat →

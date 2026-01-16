@@ -16,15 +16,9 @@ export const installedAdapters = pgTable('installed_adapters', {
   installedAt: timestamp('installed_at').notNull().defaultNow(),
 });
 
-export const userPolicies = pgTable('user_policies', {
-  id: serial('id').primaryKey(),
-  userAddress: text('user_address').notNull(),
-  policyType: text('policy_type').notNull(),
-  isEnabled: boolean('is_enabled').notNull().default(true),
-  config: jsonb('config').notNull(),
-  adapterId: text('adapter_id'),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-});
+// REMOVED: userPolicies table - Legacy policy system
+// The new system stores policies in installedAdapters.config
+// If you need to migrate old data, see migration script in /scripts
 
 export const executionLogs = pgTable('execution_logs', {
   id: serial('id').primaryKey(),

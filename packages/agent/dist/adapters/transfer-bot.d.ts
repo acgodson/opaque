@@ -10,18 +10,18 @@ declare const configSchema: z.ZodObject<{
     decimals: z.ZodOptional<z.ZodNumber>;
 }, "strip", z.ZodTypeAny, {
     period: "daily" | "weekly" | "monthly";
-    tokenType: "ETH" | "USDC";
+    tokenType: "USDC" | "ETH";
     amountPerTransfer: string;
     maxAmountPerPeriod: string;
-    tokenAddress?: string | undefined;
     recipient?: string | undefined;
     decimals?: number | undefined;
+    tokenAddress?: string | undefined;
 }, {
-    tokenAddress?: string | undefined;
+    period?: "daily" | "weekly" | "monthly" | undefined;
     recipient?: string | undefined;
     decimals?: number | undefined;
-    period?: "daily" | "weekly" | "monthly" | undefined;
-    tokenType?: "ETH" | "USDC" | undefined;
+    tokenAddress?: string | undefined;
+    tokenType?: "USDC" | "ETH" | undefined;
     amountPerTransfer?: string | undefined;
     maxAmountPerPeriod?: string | undefined;
 }>;

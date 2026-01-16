@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { DAY_NAMES, TIMEZONE_OPTIONS, type PolicyFormState } from "../types/policy";
+import type { PolicyFormState } from "../types/policy";
 
 interface AdvancedConditionsFormProps {
   value: PolicyFormState;
@@ -9,164 +9,85 @@ interface AdvancedConditionsFormProps {
 }
 
 export function AdvancedConditionsForm({ value, onChange }: AdvancedConditionsFormProps) {
-  const [enabledConditions, setEnabledConditions] = useState({
-    timeWindow: !!(value.conditions?.timeWindow),
-    gasLimit: !!(value.conditions?.signals?.gas),
-    whitelist: !!(value.conditions?.recipients?.allowed),
-    cooldown: !!(value.conditions?.cooldown),
-  });
+  const [showAddAddress, setShowAddAddress] = useState(false);
+  const [newAddress, setNewAddress] = useState("");
 
-  const handleConditionToggle = (condition: keyof typeof enabledConditions) => {
-    const newEnabled = { ...enabledConditions, [condition]: !enabledConditions[condition] };
-    setEnabledConditions(newEnabled);
-
-    if (!newEnabled[condition]) {
-      const newConditions = { ...value.conditions };
-
-      if (condition === "timeWindow") {
-        delete newConditions.timeWindow;
-      } else if (condition === "gasLimit") {
-        if (newConditions.signals) {
-          delete newConditions.signals.gas;
-          if (!newConditions.signals.security) {
-            delete newConditions.signals;
-          }
-        }
-      } else if (condition === "whitelist") {
-        if (newConditions.recipients) {
-          delete newConditions.recipients.allowed;
-          if (!newConditions.recipients.blocked) {
-            delete newConditions.recipients;
-          }
-        }
-      } else if (condition === "cooldown") {
-        delete newConditions.cooldown;
-      }
-
+  const handleTimeWindowToggle = (enabled: boolean) => {
+    if (!enabled) {
+      const { timeWindow, ...rest } = value;
+      onChange(rest);
+    } else {
       onChange({
         ...value,
-        conditions: Object.keys(newConditions).length > 0 ? newConditions : undefined,
-      });
-    } else {
-      const newConditions = { ...value.conditions };
-
-      if (condition === "timeWindow") {
-        newConditions.timeWindow = {
-          days: [1, 2, 3, 4, 5],
+        timeWindow: {
+          enabled: true,
           startHour: 9,
           endHour: 17,
-          timezone: "UTC",
-        };
-      } else if (condition === "gasLimit") {
-        if (!newConditions.signals) newConditions.signals = {};
-        newConditions.signals.gas = { maxGwei: 50 };
-      } else if (condition === "whitelist") {
-        if (!newConditions.recipients) newConditions.recipients = {};
-        newConditions.recipients.allowed = [];
-      } else if (condition === "cooldown") {
-        newConditions.cooldown = { seconds: 3600 };
-      }
-
-      onChange({ ...value, conditions: newConditions });
+        },
+      });
     }
   };
 
-  const handleDayToggle = (day: number) => {
-    if (!value.conditions?.timeWindow) return;
-
-    const currentDays = value.conditions.timeWindow.days;
-    const newDays = currentDays.includes(day)
-      ? currentDays.filter(d => d !== day)
-      : [...currentDays, day].sort((a, b) => a - b);
-
-    onChange({
-      ...value,
-      conditions: {
-        ...value.conditions,
-        timeWindow: { ...value.conditions.timeWindow, days: newDays },
-      },
-    });
-  };
-
   const handleTimeChange = (field: "startHour" | "endHour", newValue: number) => {
-    if (!value.conditions?.timeWindow) return;
+    if (!value.timeWindow) return;
 
     onChange({
       ...value,
-      conditions: {
-        ...value.conditions,
-        timeWindow: { ...value.conditions.timeWindow, [field]: newValue },
+      timeWindow: {
+        ...value.timeWindow,
+        [field]: newValue,
       },
     });
   };
 
-  const handleTimezoneChange = (timezone: string) => {
-    onChange({
-      ...value,
-      conditions: {
-        ...value.conditions!,
-        timeWindow: { ...value.conditions!.timeWindow!, timezone },
-      },
-    });
-  };
-
-  const handleGasLimitChange = (maxGwei: number) => {
-    if (!value.conditions) return;
-
-    onChange({
-      ...value,
-      conditions: {
-        ...value.conditions,
-        signals: {
-          ...value.conditions.signals,
-          gas: { maxGwei },
+  const handleWhitelistToggle = (enabled: boolean) => {
+    if (!enabled) {
+      const { whitelist, ...rest } = value;
+      onChange(rest);
+    } else {
+      onChange({
+        ...value,
+        whitelist: {
+          enabled: true,
+          addresses: [],
         },
-      },
-    });
+      });
+    }
   };
 
-  const handleWhitelistAdd = () => {
-    const newAddress = prompt("Enter Ethereum address to whitelist:");
+  const handleAddAddress = () => {
     if (!newAddress || !/^0x[a-fA-F0-9]{40}$/.test(newAddress)) {
       alert("Invalid Ethereum address");
       return;
     }
 
-    const current = value.conditions?.recipients?.allowed || [];
+    if (!value.whitelist) return;
+
+    if (value.whitelist.addresses.length >= 4) {
+      alert("Maximum 4 addresses supported (Merkle tree depth 2)");
+      return;
+    }
+
     onChange({
       ...value,
-      conditions: {
-        ...value.conditions!,
-        recipients: {
-          ...value.conditions!.recipients,
-          allowed: [...current, newAddress],
-        },
+      whitelist: {
+        ...value.whitelist,
+        addresses: [...value.whitelist.addresses, newAddress.toLowerCase()],
       },
     });
+
+    setNewAddress("");
+    setShowAddAddress(false);
   };
 
-  const handleWhitelistRemove = (address: string) => {
-    const current = value.conditions?.recipients?.allowed || [];
-    onChange({
-      ...value,
-      conditions: {
-        ...value.conditions!,
-        recipients: {
-          ...value.conditions!.recipients,
-          allowed: current.filter(a => a !== address),
-        },
-      },
-    });
-  };
-
-  const handleCooldownChange = (seconds: number) => {
-    if (!value.conditions) return;
+  const handleRemoveAddress = (address: string) => {
+    if (!value.whitelist) return;
 
     onChange({
       ...value,
-      conditions: {
-        ...value.conditions,
-        cooldown: { seconds },
+      whitelist: {
+        ...value.whitelist,
+        addresses: value.whitelist.addresses.filter(a => a !== address),
       },
     });
   };
@@ -178,8 +99,8 @@ export function AdvancedConditionsForm({ value, onChange }: AdvancedConditionsFo
           <input
             type="checkbox"
             id="enable-timewindow"
-            checked={enabledConditions.timeWindow}
-            onChange={() => handleConditionToggle("timeWindow")}
+            checked={!!value.timeWindow?.enabled}
+            onChange={(e) => handleTimeWindowToggle(e.target.checked)}
             className="w-4 h-4 rounded border-purple text-purple-primary focus:ring-purple-primary cursor-pointer accent-purple-500"
           />
           <label htmlFor="enable-timewindow" className="text-sm font-medium cursor-pointer text-white">
@@ -187,26 +108,11 @@ export function AdvancedConditionsForm({ value, onChange }: AdvancedConditionsFo
           </label>
         </div>
 
-        {enabledConditions.timeWindow && value.conditions?.timeWindow && (
+        {value.timeWindow?.enabled && (
           <div className="ml-6 space-y-3">
-            <div>
-              <label className="block text-xs text-purple-muted mb-2">Active Days</label>
-              <div className="flex flex-wrap gap-2">
-                {DAY_NAMES.map((day, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handleDayToggle(index)}
-                    className={`px-3 py-1 text-xs rounded transition-all ${
-                      value.conditions!.timeWindow!.days.includes(index)
-                        ? "btn-purple text-white"
-                        : "btn-purple-outline"
-                    }`}
-                  >
-                    {day.slice(0, 3)}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <p className="text-xs text-purple-muted mb-3">
+              Transactions will only be allowed during these hours (UTC). The circuit checks the hour from the transaction timestamp.
+            </p>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -215,8 +121,8 @@ export function AdvancedConditionsForm({ value, onChange }: AdvancedConditionsFo
                   type="number"
                   min="0"
                   max="23"
-                  value={value.conditions.timeWindow.startHour}
-                  onChange={(e) => handleTimeChange("startHour", parseInt(e.target.value))}
+                  value={value.timeWindow.startHour}
+                  onChange={(e) => handleTimeChange("startHour", parseInt(e.target.value) || 0)}
                   className="w-full px-3 py-2 input-purple rounded text-sm"
                 />
               </div>
@@ -226,59 +132,25 @@ export function AdvancedConditionsForm({ value, onChange }: AdvancedConditionsFo
                   type="number"
                   min="0"
                   max="23"
-                  value={value.conditions.timeWindow.endHour}
-                  onChange={(e) => handleTimeChange("endHour", parseInt(e.target.value))}
+                  value={value.timeWindow.endHour}
+                  onChange={(e) => handleTimeChange("endHour", parseInt(e.target.value) || 0)}
                   className="w-full px-3 py-2 input-purple rounded text-sm"
                 />
               </div>
             </div>
 
-            <div>
-              <label className="block text-xs text-purple-muted mb-1">Timezone</label>
-              <select
-                value={value.conditions.timeWindow.timezone}
-                onChange={(e) => handleTimezoneChange(e.target.value)}
-                className="w-full px-3 py-2 input-purple rounded text-sm cursor-pointer"
-              >
-                {TIMEZONE_OPTIONS.map((tz) => (
-                  <option key={tz} value={tz}>
-                    {tz}
-                  </option>
-                ))}
-              </select>
+            <div className="p-3 bg-purple-subtle border border-purple rounded-lg">
+              <div className="flex items-start gap-2">
+                <span className="text-purple-accent text-sm">💡</span>
+                <div className="text-xs text-purple-muted">
+                  {value.timeWindow.startHour <= value.timeWindow.endHour ? (
+                    <>Allows transactions from {value.timeWindow.startHour}:00 to {value.timeWindow.endHour}:00 UTC</>
+                  ) : (
+                    <>Allows transactions from {value.timeWindow.startHour}:00 to {value.timeWindow.endHour}:00 UTC (wraps around midnight)</>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
-        )}
-      </div>
-
-      <div className="border border-purple rounded-lg p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <input
-            type="checkbox"
-            id="enable-gas"
-            checked={enabledConditions.gasLimit}
-            onChange={() => handleConditionToggle("gasLimit")}
-            className="w-4 h-4 rounded border-purple text-purple-primary focus:ring-purple-primary cursor-pointer accent-purple-500"
-          />
-          <label htmlFor="enable-gas" className="text-sm font-medium cursor-pointer text-white">
-            Gas price limits
-          </label>
-        </div>
-
-        {enabledConditions.gasLimit && value.conditions?.signals?.gas && (
-          <div className="ml-6">
-            <label className="block text-xs text-purple-muted mb-1">Maximum Gas Price (Gwei)</label>
-            <input
-              type="number"
-              min="1"
-              value={value.conditions.signals.gas.maxGwei || ""}
-              onChange={(e) => handleGasLimitChange(parseInt(e.target.value) || 0)}
-              className="w-full px-3 py-2 input-purple rounded text-sm"
-              placeholder="50"
-            />
-            <p className="text-xs text-purple-muted mt-1">
-              Transactions will be blocked if gas price exceeds this limit
-            </p>
           </div>
         )}
       </div>
@@ -288,8 +160,8 @@ export function AdvancedConditionsForm({ value, onChange }: AdvancedConditionsFo
           <input
             type="checkbox"
             id="enable-whitelist"
-            checked={enabledConditions.whitelist}
-            onChange={() => handleConditionToggle("whitelist")}
+            checked={!!value.whitelist?.enabled}
+            onChange={(e) => handleWhitelistToggle(e.target.checked)}
             className="w-4 h-4 rounded border-purple text-purple-primary focus:ring-purple-primary cursor-pointer accent-purple-500"
           />
           <label htmlFor="enable-whitelist" className="text-sm font-medium cursor-pointer text-white">
@@ -297,25 +169,57 @@ export function AdvancedConditionsForm({ value, onChange }: AdvancedConditionsFo
           </label>
         </div>
 
-        {enabledConditions.whitelist && value.conditions?.recipients && (
-          <div className="ml-6 space-y-2">
-            <button
-              onClick={handleWhitelistAdd}
-              className="px-3 py-1.5 btn-purple text-white text-xs rounded"
-            >
-              + Add Address
-            </button>
+        {value.whitelist?.enabled && (
+          <div className="ml-6 space-y-3">
+            <p className="text-xs text-purple-muted">
+              Only allow transfers to these addresses. Uses Merkle tree verification (max 4 addresses).
+            </p>
 
-            {value.conditions.recipients.allowed && value.conditions.recipients.allowed.length > 0 ? (
+            {!showAddAddress ? (
+              <button
+                onClick={() => setShowAddAddress(true)}
+                disabled={value.whitelist.addresses.length >= 4}
+                className="px-3 py-1.5 btn-purple text-white text-xs rounded disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                + Add Address
+              </button>
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newAddress}
+                  onChange={(e) => setNewAddress(e.target.value)}
+                  placeholder="0x..."
+                  className="flex-1 px-3 py-2 input-purple rounded text-sm font-mono"
+                />
+                <button
+                  onClick={handleAddAddress}
+                  className="px-3 py-2 btn-purple text-white text-xs rounded"
+                >
+                  Add
+                </button>
+                <button
+                  onClick={() => {
+                    setShowAddAddress(false);
+                    setNewAddress("");
+                  }}
+                  className="px-3 py-2 btn-purple-outline text-xs rounded"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+
+            {value.whitelist.addresses.length > 0 ? (
               <div className="space-y-1">
-                {value.conditions.recipients.allowed.map((addr) => (
+                {value.whitelist.addresses.map((addr) => (
                   <div
                     key={addr}
                     className="flex items-center justify-between p-2 bg-black/30 rounded text-xs"
                   >
                     <span className="font-mono text-purple-muted">{addr}</span>
                     <button
-                      onClick={() => handleWhitelistRemove(addr)}
+                      onClick={() => handleRemoveAddress(addr)}
                       className="text-red-400 hover:text-red-300 ml-2"
                     >
                       ✕
@@ -326,39 +230,12 @@ export function AdvancedConditionsForm({ value, onChange }: AdvancedConditionsFo
             ) : (
               <p className="text-xs text-purple-muted">No whitelisted addresses yet</p>
             )}
-          </div>
-        )}
-      </div>
 
-      <div className="border border-purple rounded-lg p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <input
-            type="checkbox"
-            id="enable-cooldown"
-            checked={enabledConditions.cooldown}
-            onChange={() => handleConditionToggle("cooldown")}
-            className="w-4 h-4 rounded border-purple text-purple-primary focus:ring-purple-primary cursor-pointer accent-purple-500"
-          />
-          <label htmlFor="enable-cooldown" className="text-sm font-medium cursor-pointer text-white">
-            Cooldown period
-          </label>
-        </div>
-
-        {enabledConditions.cooldown && value.conditions?.cooldown && (
-          <div className="ml-6">
-            <label className="block text-xs text-purple-muted mb-1">Cooldown Period (seconds)</label>
-            <input
-              type="number"
-              min="60"
-              step="60"
-              value={value.conditions.cooldown.seconds || ""}
-              onChange={(e) => handleCooldownChange(parseInt(e.target.value) || 0)}
-              className="w-full px-3 py-2 input-purple rounded text-sm"
-              placeholder="3600"
-            />
-            <p className="text-xs text-purple-muted mt-1">
-              Minimum time between transactions (in seconds). 3600 = 1 hour
-            </p>
+            {value.whitelist.addresses.length >= 4 && (
+              <p className="text-xs text-yellow-400">
+                Maximum addresses reached (4). Circuit uses Merkle tree depth 2.
+              </p>
+            )}
           </div>
         )}
       </div>

@@ -97,6 +97,7 @@ export const adaptersRouter = createTRPCRouter({
           tokenSymbol: a.tokenSymbol,
           tokenDecimals: a.tokenDecimals,
           config: a.config,
+          lastRun: a.lastRun?.toISOString(),
           installedAt: a.installedAt.toISOString(),
         })),
       };
@@ -152,12 +153,37 @@ export const adaptersRouter = createTRPCRouter({
         throw new Error("Invalid adapter configuration");
       }
 
+      let processedConfig = { ...input.config };
+      
+      if (processedConfig.whitelist?.enabled && processedConfig.whitelist?.addresses) {
+        const addresses = processedConfig.whitelist.addresses as string[];
+        
+        if (addresses.length === 0) {
+          throw new Error("Whitelist enabled but no addresses provided");
+        }
+        
+        if (addresses.length > 4) {
+          throw new Error("Maximum 4 addresses supported (Merkle tree depth 2)");
+        }
+
+        // Generate Merkle tree using Pedersen hash (matches circuit)
+        const { generateMerkleProof } = await import("../../lib/merkle-backend");
+        const merkleProof = await generateMerkleProof(addresses, 0);
+        
+        processedConfig.whitelist = {
+          enabled: true,
+          root: merkleProof.root,
+          path: merkleProof.path,
+          index: merkleProof.index,
+        };
+      }
+
       const [inserted] = await ctx.db
         .insert(installedAdapters)
         .values({
           userAddress: input.userAddress,
           adapterId: input.adapterId,
-          config: input.config,
+          config: processedConfig,
           isActive: true,
           isPublic: input.isPublic,
           deploymentUrl: input.deploymentUrl,
@@ -345,5 +371,15 @@ export const adaptersRouter = createTRPCRouter({
       } catch (error) {
         throw new Error("Failed to lookup token");
       }
+    }),
+
+  generateMerkle: baseProcedure
+    .input(z.object({ 
+      addresses: z.array(z.string()).min(1).max(4)
+    }))
+    .mutation(async ({ input }) => {
+      const { generateMerkleProof } = await import("../../lib/merkle-backend");
+      const merkleProof = await generateMerkleProof(input.addresses, 0);
+      return merkleProof;
     }),
 });

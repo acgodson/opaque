@@ -112,7 +112,7 @@ export default function PolicyBuilderPage() {
                     className="p-4 bg-zinc-900 border border-zinc-800 rounded-lg hover:border-blue-600 transition-colors text-left"
                   >
                     <div className="flex items-start gap-3">
-                      <span className="text-2xl">{template.icon || "📄"}</span>
+                      <span className="text-2xl">{"📄"}</span>
                       <div>
                         <div className="font-medium mb-1">{template.name}</div>
                         <div className="text-sm text-zinc-400">{template.description}</div>

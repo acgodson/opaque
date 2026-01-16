@@ -1,14 +1,14 @@
 import { createTRPCRouter, baseProcedure } from '../init';
 import { adaptersRouter } from './adapters';
-import { policiesRouter } from './policies';
 import { activityRouter } from './activity';
 import { agentRouter } from './agent';
+import { verificationRouter } from './verification';
 
 export const appRouter = createTRPCRouter({
   adapters: adaptersRouter,
-  policies: policiesRouter,
   activity: activityRouter,
   agent: agentRouter,
+  verification: verificationRouter,
 
   health: baseProcedure.query(async () => {
     return {

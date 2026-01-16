@@ -6,7 +6,7 @@ class EnclaveClientImpl {
 
   constructor(baseUrl?: string) {
     this.baseUrl =
-      baseUrl || process.env.ENCLAVE_URL || "http://localhost:8000";
+      baseUrl || process.env.ENCLAVE_URL || "http://localhost:8001";
   }
 
   private serializeBigInt(obj: any): any {

@@ -1,293 +1,131 @@
 "use client";
 
-import { useState } from "react";
-import type { CompiledPolicy, PolicyDocument } from "../types/policy";
+import type { CompiledPolicy, PolicyFormState } from "../types/policy";
 
 interface PolicyPreviewProps {
   compiled: CompiledPolicy | null;
-  policyDocument: Partial<PolicyDocument>;
-  loading?: boolean;
-  error?: string | null;
-  onPolicyChange?: (policy: Partial<PolicyDocument>) => void;
+  policyDocument: PolicyFormState;
+  loading: boolean;
+  error: string | null;
+  onPolicyChange?: (policy: PolicyFormState) => void;
 }
 
-export function PolicyPreview({ compiled, policyDocument, loading, error, onPolicyChange }: PolicyPreviewProps) {
-  const [activeTab, setActiveTab] = useState<"summary" | "json">("summary");
-  const [showPermissionDetails, setShowPermissionDetails] = useState(false);
-  const [showRulesDetails, setShowRulesDetails] = useState(false);
-  const [isEditingJson, setIsEditingJson] = useState(false);
-  const [jsonText, setJsonText] = useState("");
-  const [jsonError, setJsonError] = useState<string | null>(null);
+export function PolicyPreview({
+  compiled,
+  policyDocument,
+  loading,
+  error,
+}: PolicyPreviewProps) {
+  if (loading) {
+    return (
+      <div className="card-purple rounded-lg p-6">
+        <div className="text-center text-purple-muted">Compiling policy...</div>
+      </div>
+    );
+  }
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(JSON.stringify(policyDocument, null, 2));
-  };
+  if (error) {
+    return (
+      <div className="card-purple rounded-lg p-6 border-2 border-red-500">
+        <div className="flex items-start gap-3">
+          <span className="text-red-500 text-xl">⚠️</span>
+          <div>
+            <h3 className="font-semibold text-red-400 mb-1">Compilation Error</h3>
+            <p className="text-sm text-red-300">{error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  const handleEditJson = () => {
-    setJsonText(JSON.stringify(policyDocument, null, 2));
-    setJsonError(null);
-    setIsEditingJson(true);
-  };
+  if (!compiled) {
+    return (
+      <div className="card-purple rounded-lg p-6">
+        <div className="text-center text-purple-muted">Configure policy to see preview</div>
+      </div>
+    );
+  }
 
-  const handleCancelEdit = () => {
-    setIsEditingJson(false);
-    setJsonText("");
-    setJsonError(null);
-  };
-
-  const handleSaveJson = () => {
-    try {
-      const parsed = JSON.parse(jsonText);
-      setJsonError(null);
-      if (onPolicyChange) {
-        onPolicyChange(parsed);
-      }
-      setIsEditingJson(false);
-      setJsonText("");
-    } catch (err) {
-      setJsonError(err instanceof Error ? err.message : "Invalid JSON");
-    }
-  };
-
-  const handleJsonTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setJsonText(e.target.value);
-    if (jsonError) setJsonError(null);
-  };
+  const hasAnyPolicy = compiled.config.maxAmount?.enabled || 
+                       compiled.config.timeWindow?.enabled || 
+                       compiled.config.whitelist?.enabled;
 
   return (
-    <div className="card-purple rounded-lg overflow-hidden">
-      <div className="flex border-b border-purple">
-        <button
-          onClick={() => setActiveTab("summary")}
-          className={`flex-1 px-6 py-3 text-sm font-medium transition-all ${
-            activeTab === "summary" ? "tab-active" : "tab-inactive"
-          }`}
-        >
-          Summary
-        </button>
-        <button
-          onClick={() => setActiveTab("json")}
-          className={`flex-1 px-6 py-3 text-sm font-medium transition-all ${
-            activeTab === "json" ? "tab-active" : "tab-inactive"
-          }`}
-        >
-          JSON View
-        </button>
-      </div>
+    <div className="space-y-4">
+      <div className={`rounded-lg p-6 ${compiled.valid ? 'card-purple' : 'card-purple border-2 border-red-500'}`}>
+        <div className="flex items-center gap-2 mb-4">
+          <span className={`text-2xl ${compiled.valid ? '✅' : '❌'}`}></span>
+          <h3 className="font-semibold text-white">
+            {compiled.valid ? 'Policy Valid' : 'Policy Invalid'}
+          </h3>
+        </div>
 
-      <div className="p-6">
-        {loading && (
-          <div className="text-center py-8 text-purple-muted">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-accent"></div>
-            <div className="mt-2">Compiling policy...</div>
-          </div>
-        )}
-
-        {error && (
-          <div className="p-4 status-used rounded-lg">
-            <div className="font-semibold mb-1">❌ Compilation Error</div>
-            <div className="text-sm">{error}</div>
-          </div>
-        )}
-
-        {!loading && !error && activeTab === "summary" && (
-          <>
-            {compiled?.valid ? (
-              <div className="space-y-6">
-                <div className="flex items-center gap-2 text-green-400">
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  <span className="font-semibold">Policy is Valid</span>
-                </div>
-
-                <div>
-                  <div className="text-sm text-purple-muted mb-2">Summary</div>
-                  <p className="text-base leading-relaxed text-white">{compiled.summary}</p>
-                </div>
-
-                <div className="border-t border-purple pt-6">
-                  <button
-                    onClick={() => setShowPermissionDetails(!showPermissionDetails)}
-                    className="flex items-center justify-between w-full text-left"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">🔐</span>
-                      <span className="font-semibold text-white">MetaMask Permission</span>
-                    </div>
-                    <svg
-                      className={`w-5 h-5 text-purple-muted transition-transform ${
-                        showPermissionDetails ? "rotate-180" : ""
-                      }`}
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </button>
-
-                  {showPermissionDetails && compiled.permission && (
-                    <div className="mt-4 p-4 bg-black/30 rounded-lg space-y-2 text-sm font-mono">
-                      <div className="flex justify-between">
-                        <span className="text-purple-muted">Type:</span>
-                        <span className="text-white">{compiled.permission.type}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-purple-muted">Token:</span>
-                        <span className="text-white truncate ml-2">{compiled.permission.data.token}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-purple-muted">Allowance:</span>
-                        <span className="text-white">{compiled.permission.data.allowance}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-purple-muted">Period:</span>
-                        <span className="text-white">{compiled.permission.data.period} seconds</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="border-t border-purple pt-6">
-                  <button
-                    onClick={() => setShowRulesDetails(!showRulesDetails)}
-                    className="flex items-center justify-between w-full text-left"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">⚙️</span>
-                      <span className="font-semibold text-white">Opaque Safeguards</span>
-                      <span className="text-sm text-purple-muted">
-                        ({compiled.rules.length} active)
-                      </span>
-                    </div>
-                    <svg
-                      className={`w-5 h-5 text-purple-muted transition-transform ${
-                        showRulesDetails ? "rotate-180" : ""
-                      }`}
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </button>
-
-                  {showRulesDetails && (
-                    <div className="mt-4 space-y-2">
-                      {compiled.rules.map((rule, index) => (
-                        <div
-                          key={`${rule.policyType}-${index}`}
-                          className="p-3 bg-black/30 rounded-lg"
-                        >
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-green-400">✓</span>
-                            <span className="font-medium text-sm text-white">{rule.policyType}</span>
-                          </div>
-                          <div className="text-xs text-purple-muted font-mono ml-6">
-                            {JSON.stringify(rule.config)}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-8 text-purple-muted">
-                <div className="text-4xl mb-2">📋</div>
-                <div>Fill in the policy details to see the compiled output</div>
-              </div>
-            )}
-          </>
-        )}
-
-        {!loading && activeTab === "json" && (
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <div className="text-sm text-purple-muted">PolicyDocument JSON</div>
-              <div className="flex gap-2">
-                {!isEditingJson ? (
-                  <>
-                    <button
-                      onClick={handleEditJson}
-                      className="px-3 py-1 text-xs btn-purple rounded"
-                    >
-                      ✏️ Edit JSON
-                    </button>
-                    <button
-                      onClick={copyToClipboard}
-                      className="px-3 py-1 text-xs btn-purple-outline rounded"
-                    >
-                      Copy JSON
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      onClick={handleSaveJson}
-                      className="px-3 py-1 text-xs bg-green-600 hover:bg-green-700 rounded"
-                    >
-                      ✓ Save Changes
-                    </button>
-                    <button
-                      onClick={handleCancelEdit}
-                      className="px-3 py-1 text-xs btn-purple-outline rounded"
-                    >
-                      Cancel
-                    </button>
-                  </>
-                )}
-              </div>
+        {compiled.valid && hasAnyPolicy && (
+          <div className="space-y-3">
+            <div className="text-sm text-purple-muted">
+              {compiled.summary}
             </div>
 
-            {jsonError && (
-              <div className="p-3 status-used rounded text-sm">
-                <span className="font-semibold">JSON Error:</span> {jsonError}
+            {compiled.config.maxAmount?.enabled && (
+              <div className="p-3 bg-black/30 rounded-lg">
+                <div className="text-xs text-purple-muted mb-1">Max Amount</div>
+                <div className="text-sm text-white font-mono">
+                  {(BigInt(compiled.config.maxAmount.limit) / BigInt(1e18)).toString()} MCK
+                </div>
+                <div className="text-xs text-purple-muted mt-1">
+                  ({compiled.config.maxAmount.limit} wei)
+                </div>
               </div>
             )}
 
-            {isEditingJson ? (
-              <textarea
-                value={jsonText}
-                onChange={handleJsonTextChange}
-                className="w-full h-96 p-4 bg-black border border-purple rounded-lg text-sm font-mono text-purple-accent focus:outline-none focus:border-purple-strong resize-none"
-                spellCheck={false}
-              />
-            ) : (
-              <pre className="p-4 bg-black border border-purple rounded-lg overflow-x-auto text-sm">
-                <code className="text-purple-accent">
-                  {JSON.stringify(policyDocument, null, 2)}
-                </code>
-              </pre>
+            {compiled.config.timeWindow?.enabled && (
+              <div className="p-3 bg-black/30 rounded-lg">
+                <div className="text-xs text-purple-muted mb-1">Time Window</div>
+                <div className="text-sm text-white">
+                  {compiled.config.timeWindow.startHour}:00 - {compiled.config.timeWindow.endHour}:00 UTC
+                </div>
+              </div>
             )}
 
+            {compiled.config.whitelist?.enabled && (
+              <div className="p-3 bg-black/30 rounded-lg">
+                <div className="text-xs text-purple-muted mb-1">Whitelist</div>
+                <div className="text-xs text-white font-mono break-all">
+                  Root: {compiled.config.whitelist.root?.slice(0, 10)}...{compiled.config.whitelist.root?.slice(-8)}
+                </div>
+                <div className="text-xs text-purple-muted mt-1">
+                  {policyDocument.whitelist?.addresses.length || 0} address(es)
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {compiled.valid && !hasAnyPolicy && (
+          <div className="text-sm text-purple-muted">
+            No policies configured. Enable at least one policy to protect your transactions.
+          </div>
+        )}
+
+        {!compiled.valid && compiled.errors && (
+          <div className="space-y-2">
+            {compiled.errors.map((err, i) => (
+              <div key={i} className="text-sm text-red-300">• {err}</div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {compiled.valid && hasAnyPolicy && (
+        <div className="p-4 bg-purple-subtle border border-purple rounded-lg">
+          <div className="flex items-start gap-2">
+            <span className="text-purple-accent text-lg">🔐</span>
             <div className="text-xs text-purple-muted">
-              {isEditingJson ? (
-                <>
-                  Edit the JSON directly. Changes will be validated and automatically recompiled when
-                  you save.
-                </>
-              ) : (
-                <>
-                  Click &quot;Edit JSON&quot; to manually edit the policy document. Changes will trigger live
-                  compilation.
-                </>
-              )}
+              This policy will be verified in a zero-knowledge circuit. The agent cannot see or manipulate these constraints.
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

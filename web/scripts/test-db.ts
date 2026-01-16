@@ -9,12 +9,8 @@ async function testConnection() {
   // Import db and schema after env vars are loaded
   const { db } = await import('../src/db');
   const {
-    sessionAccounts,
-    permissions,
     installedAdapters,
-    userPolicies,
     executionLogs,
-    securityAlerts,
   } = await import('../src/db/schema');
 
   try {
@@ -29,19 +25,13 @@ async function testConnection() {
     // Test 2: Count records in each table using Drizzle queries
     console.log('\n📈 Record counts:');
 
-    const sessionCount = await db.select({ count: sql<number>`count(*)` }).from(sessionAccounts);
-    const permissionCount = await db.select({ count: sql<number>`count(*)` }).from(permissions);
-    const adapterCount = await db.select({ count: sql<number>`count(*)` }).from(installedAdapters);
-    const policyCount = await db.select({ count: sql<number>`count(*)` }).from(userPolicies);
-    const logCount = await db.select({ count: sql<number>`count(*)` }).from(executionLogs);
-    const alertCount = await db.select({ count: sql<number>`count(*)` }).from(securityAlerts);
 
-    console.log(`  - session_accounts: ${sessionCount[0].count}`);
-    console.log(`  - permissions: ${permissionCount[0].count}`);
+    const adapterCount = await db.select({ count: sql<number>`count(*)` }).from(installedAdapters);
+    const logCount = await db.select({ count: sql<number>`count(*)` }).from(executionLogs);
+
+
     console.log(`  - installed_adapters: ${adapterCount[0].count}`);
-    console.log(`  - user_policies: ${policyCount[0].count}`);
     console.log(`  - execution_logs: ${logCount[0].count}`);
-    console.log(`  - security_alerts: ${alertCount[0].count}`);
 
     console.log('\n✨ All tests passed! Postgres is ready to use.\n');
     process.exit(0);

@@ -9,6 +9,7 @@ import { useCompiler } from "../../../../hooks/useCompiler";
 import { useTemplates } from "../../../../hooks/useTemplates";
 import { useWallet } from "../../../../hooks/useWallet";
 import { createEmptyPolicy, type PolicyFormState, type PolicyTemplate } from "../../../../types/policy";
+import { trpc } from "../../../../trpc/client";
 
 const ADAPTER_INFO: Record<string, { name: string; description: string }> = {
   "mantle-transfer": {
@@ -25,9 +26,12 @@ export default function AdapterPolicyBuilder() {
 
   const { address, isConnected } = useWallet();
   const [policyDoc, setPolicyDoc] = useState<PolicyFormState>(createEmptyPolicy());
+  const [installing, setInstalling] = useState(false);
+  const [installError, setInstallError] = useState<string | null>(null);
 
   const { compiled, loading, error } = useCompiler(policyDoc);
   const { templates, loading: templatesLoading } = useTemplates();
+  const installMutation = trpc.adapters.install.useMutation();
 
   useEffect(() => {
     if (!policyDoc.name || policyDoc.name === "") {
@@ -42,10 +46,55 @@ export default function AdapterPolicyBuilder() {
     setPolicyDoc(template.policy as PolicyFormState);
   };
 
-  const handleContinue = () => {
-    if (compiled?.valid) {
-      localStorage.setItem("compiledPolicy", JSON.stringify({ ...compiled, adapterId }));
+  const handleContinue = async () => {
+    if (!compiled?.valid || !address) return;
+
+    setInstalling(true);
+    setInstallError(null);
+
+    try {
+      const tokenAddress = "0x4c5d8A75F3762c1561D96f177694f67378705E98";
+      const tokenSymbol = "MCK";
+      const tokenDecimals = 18;
+
+      const result = await installMutation.mutateAsync({
+        userAddress: address,
+        adapterId,
+        config: compiled.config,
+        isPublic: false,
+        tokenAddress,
+        tokenSymbol,
+        tokenDecimals,
+      });
+
+      const installationId = result.installed.id;
+
+      const enclaveUrl = process.env.NEXT_PUBLIC_ENCLAVE_URL || "http://35.159.224.254:8001";
+      const enclaveResponse = await fetch(enclaveUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "STORE_POLICY_CONFIG",
+          userAddress: address,
+          installationId,
+          policyConfig: compiled.config,
+        }),
+      });
+
+      if (!enclaveResponse.ok) {
+        throw new Error(`Enclave request failed: ${enclaveResponse.statusText}`);
+      }
+
+      const enclaveData = await enclaveResponse.json();
+      if (enclaveData.status !== "success") {
+        throw new Error(enclaveData.message || "Failed to store policy in enclave");
+      }
+
       router.push("/dashboard");
+    } catch (err) {
+      console.error("Installation failed:", err);
+      setInstallError(err instanceof Error ? err.message : "Failed to install adapter");
+      setInstalling(false);
     }
   };
 
@@ -166,19 +215,38 @@ export default function AdapterPolicyBuilder() {
                   onPolicyChange={(policy) => setPolicyDoc(policy as PolicyFormState)}
                 />
 
+                {installError && (
+                  <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                    <div className="text-sm text-red-400">{installError}</div>
+                  </div>
+                )}
+
                 {compiled?.valid && (
                   <button
                     onClick={handleContinue}
-                    className="w-full mt-4 px-6 py-3 btn-purple rounded-lg font-medium text-white flex items-center justify-center gap-2"
+                    disabled={installing}
+                    className="w-full mt-4 px-6 py-3 btn-purple rounded-lg font-medium text-white flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Continue to Permission Grant
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path
-                        fillRule="evenodd"
-                        d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
+                    {installing ? (
+                      <>
+                        <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        </svg>
+                        Installing...
+                      </>
+                    ) : (
+                      <>
+                        Install Adapter
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                          <path
+                            fillRule="evenodd"
+                            d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </>
+                    )}
                   </button>
                 )}
               </div>

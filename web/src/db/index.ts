@@ -9,7 +9,8 @@ import * as schema from './schema';
 // - Local development: Uses standard pg driver for Docker Postgres
 let db: ReturnType<typeof drizzleNode> | ReturnType<typeof drizzleVercel>;
 
-const isProduction = process.env.VERCEL || process.env.POSTGRES_URL?.includes('neon.tech');
+const databaseUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+const isProduction = process.env.VERCEL || databaseUrl?.includes('neon.tech');
 
 if (isProduction) {
   // Production: Use Vercel Postgres (Neon)
@@ -20,11 +21,12 @@ if (isProduction) {
 } else {
   // Local development: Use standard postgres driver for Docker Postgres
   const pool = new Pool({
-    connectionString: process.env.POSTGRES_URL || 'postgresql://postgres:postgres@localhost:5432/opaque',
+    connectionString: databaseUrl || 'postgresql://opaque:opaque@localhost:5432/opaque',
   });
   db = drizzleNode(pool, { schema });
   if (process.env.NODE_ENV !== 'production') {
     console.log('[DB] Using standard pg driver for local Docker Postgres');
+    console.log('[DB] Connection string:', databaseUrl?.replace(/:[^:@]+@/, ':****@'));
   }
 }
 

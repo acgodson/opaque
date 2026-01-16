@@ -4,10 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
-    "build": "pnpm --filter @opaque/agent build && next build --webpack",
+    "build": "bun run --filter @opaque/agent build && next build --webpack",
     "start": "next start"
   },
   "dependencies": {
+    "@aztec/bb.js": "1.2.0",
     "@opaque/agent": "file:../packages/agent",
     "@privy-io/node": "^0.7.0",
     "@tanstack/react-query": "^5.56.2",
