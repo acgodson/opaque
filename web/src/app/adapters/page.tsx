@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useWallet } from "../../hooks/useWallet";
 
@@ -31,13 +30,9 @@ const ADAPTERS = [
 export default function AdaptersPage() {
   const router = useRouter();
   const { isConnected, connect, isConnecting } = useWallet();
-  const [showModal, setShowModal] = useState(false);
 
   const handleAdapterSelect = (adapterId: string) => {
-    if (adapterId === "mantle-transfer") {
-      router.push("/policy");
-    }
-    setShowModal(false);
+    router.push(`/adapters/${adapterId}/policy`);
   };
 
   return (

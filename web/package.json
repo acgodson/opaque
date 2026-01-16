@@ -5,7 +5,11 @@
   "scripts": {
     "dev": "next dev --webpack",
     "build": "bun run --filter @opaque/agent build && next build --webpack",
-    "start": "next start"
+    "start": "next start",
+    "db:generate": "drizzle-kit generate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "db:drop": "drizzle-kit drop"
   },
   "dependencies": {
     "@aztec/bb.js": "1.2.0",

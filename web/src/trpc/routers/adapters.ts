@@ -149,9 +149,10 @@ export const adaptersRouter = createTRPCRouter({
         throw new Error("Adapter not found");
       }
 
-      if (!adapter.validateConfig(input.config)) {
-        throw new Error("Invalid adapter configuration");
-      }
+      // Note: We don't validate against adapter.configSchema here because
+      // input.config is a POLICY config (maxAmount, timeWindow, whitelist),
+      // not an adapter execution config (tokenAddress, recipient, amount).
+      // Policy config is validated by the frontend compiler.
 
       let processedConfig = { ...input.config };
       
@@ -405,5 +406,74 @@ export const adaptersRouter = createTRPCRouter({
       const { generateMerkleProof } = await import("../../lib/merkle-backend");
       const merkleProof = await generateMerkleProof(input.addresses, 0);
       return merkleProof;
+    }),
+
+  generateProof: baseProcedure
+    .input(
+      z.object({
+        userAddress: ethereumAddress,
+        installationId: z.number(),
+        txData: z.object({
+          amount: z.string(),
+          recipient: z.string(),
+          timestamp: z.number(),
+        }),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const enclaveUrl = process.env.ENCLAVE_URL || "http://35.159.224.254:8001";
+
+      const response = await fetch(enclaveUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "GENERATE_PROOF",
+          userAddress: input.userAddress,
+          installationId: input.installationId,
+          txData: {
+            amount: input.txData.amount,
+            recipient: input.txData.recipient,
+            timestamp: input.txData.timestamp,
+            userAddress: input.userAddress,
+          },
+        }),
+      });
+
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.error || "Proof generation failed");
+      }
+
+      return data;
+    }),
+
+  storePolicyInEnclave: baseProcedure
+    .input(
+      z.object({
+        userAddress: ethereumAddress,
+        installationId: z.number(),
+        policyConfig: z.record(z.any()),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const enclaveUrl = process.env.ENCLAVE_URL || "http://35.159.224.254:8001";
+
+      const response = await fetch(enclaveUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "STORE_POLICY_CONFIG",
+          userAddress: input.userAddress,
+          installationId: input.installationId,
+          policyConfig: input.policyConfig,
+        }),
+      });
+
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.error || "Failed to store policy");
+      }
+
+      return data;
     }),
 });

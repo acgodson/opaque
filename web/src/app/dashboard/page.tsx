@@ -173,6 +173,7 @@ interface AdapterCardProps {
 }
 
 function AdapterCard({ adapter, expanded, onToggleExpand, onToggleActive, isToggling }: AdapterCardProps) {
+  const router = useRouter();
   const config = (adapter.config || {}) as PolicyConfig;
 
   const formatAmount = (wei: string) => {
@@ -267,9 +268,25 @@ function AdapterCard({ adapter, expanded, onToggleExpand, onToggleActive, isTogg
             </div>
           </div>
 
-          <div className="pt-2 border-t border-purple-subtle/20">
-            <div className="text-xs font-medium text-purple-accent mb-2">Installation ID</div>
-            <div className="text-xs text-white font-mono">{adapter.id}</div>
+          <div className="pt-2 border-t border-purple-subtle/20 flex items-center justify-between">
+            <div>
+              <div className="text-xs font-medium text-purple-accent mb-1">Installation ID</div>
+              <div className="text-xs text-white font-mono">{adapter.id}</div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => router.push(`/playground?installationId=${adapter.id}`)}
+                className="px-3 py-1.5 text-xs btn-purple-outline rounded"
+              >
+                Test
+              </button>
+              <button
+                onClick={() => router.push(`/adapters/${adapter.id}`)}
+                className="px-3 py-1.5 text-xs btn-purple rounded text-white"
+              >
+                Details
+              </button>
+            </div>
           </div>
         </div>
       )}

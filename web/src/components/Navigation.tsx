@@ -6,7 +6,9 @@ import { useWallet } from "../hooks/useWallet";
 export function Navigation() {
   const router = useRouter();
   const pathname = usePathname();
-  const { address, isConnected, connect, isConnecting } = useWallet();
+  const { address, isConnected, connect, isConnecting, chainId, switchToSepolia } = useWallet();
+
+  const state = { chainId };
 
   const isActive = (path: string) => pathname === path || pathname.startsWith(path + "/");
 
@@ -70,12 +72,22 @@ export function Navigation() {
 
           <div className="flex items-center gap-4">
             {isConnected ? (
-              <div className="flex items-center gap-3">
-                <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 card-purple rounded-lg">
-                  <span className="text-xs font-medium text-purple-accent">Mantle Sepolia</span>
-                </div>
-                <div className="hidden sm:flex items-center gap-2 px-4 py-2 card-purple rounded-lg">
-                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
+              <div className="hidden sm:flex items-center gap-3">
+                {state.chainId === 5003 ? (
+                  <div className="flex items-center gap-2 px-3 py-1.5 card-purple rounded-lg">
+                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                    <span className="text-xs font-medium text-purple-accent">Mantle Sepolia</span>
+                  </div>
+                ) : (
+                  <button
+                    onClick={switchToSepolia}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-red-500/20 border border-red-500/40 rounded-lg"
+                  >
+                    <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                    <span className="text-xs font-medium text-red-400">Wrong Network</span>
+                  </button>
+                )}
+                <div className="flex items-center gap-2 px-4 py-2 card-purple rounded-lg">
                   <span className="text-sm font-mono text-purple-muted">
                     {address?.slice(0, 6)}...{address?.slice(-4)}
                   </span>

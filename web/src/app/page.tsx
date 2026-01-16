@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useWallet } from "../hooks/useWallet";
 import { trpc } from "../trpc/client";
 
-type TabType = "active" | "public" | "mine";
+type TabType = "mine" | "public";
 
 interface AdapterDisplay {
   id: number;
@@ -53,7 +53,7 @@ const FEATURED_ADAPTER: AdapterDisplay = {
 export default function HomePage() {
   const router = useRouter();
   const { address, isConnected, connect, isConnecting } = useWallet();
-  const [activeTab, setActiveTab] = useState<TabType>("active");
+  const [activeTab, setActiveTab] = useState<TabType>("mine");
   const [searchQuery, setSearchQuery] = useState("");
 
   const { data: publicAdapters } = trpc.adapters.listPublic.useQuery();
@@ -61,15 +61,12 @@ export default function HomePage() {
     { userAddress: address || "" },
     { enabled: !!address }
   );
-  const { data: activeAdapters } = trpc.adapters.listActive.useQuery();
+
 
   const getAdaptersForTab = (): AdapterDisplay[] => {
     let adapters: AdapterDisplay[] = [];
     
     switch (activeTab) {
-      case "active":
-        adapters = activeAdapters?.adapters || [];
-        break;
       case "public":
         adapters = publicAdapters?.adapters || [];
         break;
@@ -78,7 +75,7 @@ export default function HomePage() {
         break;
     }
 
-    if (activeTab === "public" || activeTab === "active") {
+    if (activeTab === "public") {
       const hasFeatured = adapters.some(a => a.isFeatured);
       if (!hasFeatured) {
         adapters = [FEATURED_ADAPTER, ...adapters];
@@ -135,12 +132,12 @@ export default function HomePage() {
           <div className="max-w-7xl mx-auto px-6">
             <div className="flex items-center gap-0">
               <button
-                onClick={() => setActiveTab("active")}
+                onClick={() => setActiveTab("mine")}
                 className={`px-6 py-4 text-sm font-medium transition-all ${
-                  activeTab === "active" ? "tab-active" : "tab-inactive"
+                  activeTab === "mine" ? "tab-active" : "tab-inactive"
                 }`}
               >
-                Active
+                Mine
               </button>
               <button
                 onClick={() => setActiveTab("public")}
@@ -149,14 +146,6 @@ export default function HomePage() {
                 }`}
               >
                 Public
-              </button>
-              <button
-                onClick={() => setActiveTab("mine")}
-                className={`px-6 py-4 text-sm font-medium transition-all ${
-                  activeTab === "mine" ? "tab-active" : "tab-inactive"
-                }`}
-              >
-                Mine
               </button>
               
               <div className="ml-auto py-2">

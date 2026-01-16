@@ -14,7 +14,7 @@ import { trpc } from "../../../../trpc/client";
 const ADAPTER_INFO: Record<string, { name: string; description: string }> = {
   "mantle-transfer": {
     name: "Mantle Transfer",
-    description: "Transfers ERC20 tokens on Mantle Sepolia. Configure ZK-policies for spending limits and recipient whitelists.",
+    description: "Transfer tokens on Mantle with ZK-policy protection",
   }
 };
 
@@ -26,6 +26,7 @@ export default function AdapterPolicyBuilder() {
 
   const { address, isConnected } = useWallet();
   const [policyDoc, setPolicyDoc] = useState<PolicyFormState>(createEmptyPolicy());
+  const [showTemplates, setShowTemplates] = useState(false);
   const [installing, setInstalling] = useState(false);
   const [installError, setInstallError] = useState<string | null>(null);
 
@@ -35,37 +36,30 @@ export default function AdapterPolicyBuilder() {
 
   useEffect(() => {
     if (!policyDoc.name || policyDoc.name === "") {
-      setPolicyDoc(prev => ({
-        ...prev,
-        name: `${adapterInfo.name} Policy`,
-      }));
+      setPolicyDoc(prev => ({ ...prev, name: `${adapterInfo.name} Policy` }));
     }
   }, [adapterId, adapterInfo.name]);
 
   const handleTemplateSelect = (template: PolicyTemplate) => {
     setPolicyDoc(template.policy as PolicyFormState);
+    setShowTemplates(false);
   };
 
-  const handleContinue = async () => {
+  const handleInstall = async () => {
     if (!compiled?.valid || !address) return;
 
     setInstalling(true);
     setInstallError(null);
 
     try {
-      const tokenAddress = "0x4c5d8A75F3762c1561D96f177694f67378705E98";
-      const tokenSymbol = "MCK";
-      const tokenDecimals = 18;
-
-      // Install adapter - this saves to DB AND stores policy in enclave
       await installMutation.mutateAsync({
         userAddress: address,
         adapterId,
         config: compiled.config,
         isPublic: false,
-        tokenAddress,
-        tokenSymbol,
-        tokenDecimals,
+        tokenAddress: "0xb9e8f815ADC8418DD28f35A7D147c98f725fa538",
+        tokenSymbol: "MCK",
+        tokenDecimals: 18,
       });
 
       router.push("/dashboard");
@@ -83,13 +77,13 @@ export default function AdapterPolicyBuilder() {
         <div className="gradient-overlay" />
         <div className="relative z-10 flex items-center justify-center min-h-screen">
           <div className="text-center">
-            <h2 className="text-2xl font-bold mb-4 text-white">Wallet Not Connected</h2>
-            <p className="text-purple-muted mb-6">Please connect your wallet to build a policy</p>
+            <h2 className="text-xl font-semibold mb-3 text-white">Connect Wallet</h2>
+            <p className="text-purple-muted text-sm mb-4">Required to install adapter</p>
             <button
               onClick={() => router.push("/adapters")}
-              className="px-6 py-3 btn-purple rounded-lg font-medium text-white"
+              className="px-5 py-2 btn-purple rounded-lg text-sm text-white"
             >
-              Back to Adapters
+              Back
             </button>
           </div>
         </div>
@@ -101,134 +95,116 @@ export default function AdapterPolicyBuilder() {
     <div className="min-h-screen relative">
       <div className="grid-bg" />
       <div className="gradient-overlay" />
-      
-      <div className="relative z-10">
-        <div className="max-w-6xl mx-auto px-6 py-8">
-          <div className="mb-6">
-            <button
-              onClick={() => router.push("/adapters")}
-              className="text-purple-muted hover:text-purple-accent mb-4 flex items-center gap-2 text-sm transition-colors"
+
+      <div className="relative z-10 max-w-5xl mx-auto px-6 py-8">
+        <button
+          onClick={() => router.push("/adapters")}
+          className="text-purple-muted hover:text-purple-accent mb-4 flex items-center gap-2 text-sm"
+        >
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+          </svg>
+          Back
+        </button>
+
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-white mb-1">{adapterInfo.name}</h1>
+          <p className="text-purple-muted text-sm">{adapterInfo.description}</p>
+        </div>
+
+        {/* Templates Toggle */}
+        <div className="mb-5">
+          <button
+            onClick={() => setShowTemplates(!showTemplates)}
+            className="w-full p-3 card-purple rounded-lg hover:border-purple-accent transition-colors flex items-center justify-between"
+          >
+            <div className="flex items-center gap-2">
+              <span>📋</span>
+              <span className="text-sm text-white">Templates</span>
+            </div>
+            <svg
+              className={`w-4 h-4 text-purple-muted transition-transform ${showTemplates ? "rotate-180" : ""}`}
+              fill="currentColor"
+              viewBox="0 0 20 20"
             >
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              Back to Adapters
-            </button>
+              <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+          </button>
 
-            <div className="card-featured rounded-lg p-4 mb-6">
-              <div className="flex items-center gap-3 mb-1">
-                <h1 className="text-2xl font-bold text-white">{adapterInfo.name}</h1>
-                <span className="px-2 py-1 text-xs bg-purple-subtle text-purple-accent rounded">Policy Builder</span>
-              </div>
-              <p className="text-purple-muted text-sm">{adapterInfo.description}</p>
-            </div>
-
-            <div>
-              <h2 className="text-xl font-bold mb-1 text-white">Configure Policy</h2>
-              <p className="text-purple-muted text-sm">
-                Define spending limits and safety conditions for your {adapterInfo.name.toLowerCase()}
-              </p>
-            </div>
-          </div>
-
-          <div className="mb-6">
-            <div className="mb-3">
-              <div className="font-medium text-sm text-white">Policy Templates</div>
-              <div className="text-xs text-purple-muted">Choose a pre-built policy or customize from scratch</div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+          {showTemplates && (
+            <div className="mt-3 grid grid-cols-2 gap-3">
               {templatesLoading ? (
-                <div className="col-span-4 text-center py-6 text-purple-muted text-sm">
-                  Loading templates...
-                </div>
-              ) : templates.length === 0 ? (
-                <div className="col-span-4 text-center py-6 text-purple-muted text-sm">
-                  No templates available
-                </div>
+                <div className="col-span-2 text-center py-4 text-purple-muted text-sm">Loading...</div>
               ) : (
                 templates.map((template) => (
                   <button
                     key={template.id}
                     onClick={() => handleTemplateSelect(template)}
-                    className="p-3 card-purple rounded-lg transition-all text-left group"
+                    className="p-3 card-purple rounded-lg hover:border-purple-accent transition-colors text-left"
                   >
-                    <div className="font-medium text-sm mb-1 text-white group-hover:text-purple-accent transition-colors">
-                      {template.name}
-                    </div>
-                    <div className="text-xs text-purple-muted line-clamp-2">{template.description}</div>
+                    <div className="font-medium text-sm text-white mb-1">{template.name}</div>
+                    <div className="text-xs text-purple-muted">{template.description}</div>
                   </button>
                 ))
               )}
             </div>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Left: Form */}
+          <div className="space-y-4">
+            <div className="card-purple rounded-lg p-5">
+              <h2 className="text-sm font-semibold mb-4 text-white">Basic Settings</h2>
+              <PolicyBasicsForm value={policyDoc} onChange={setPolicyDoc} />
+            </div>
+
+            <div className="card-purple rounded-lg p-5">
+              <h2 className="text-sm font-semibold mb-4 text-white">Advanced Conditions</h2>
+              <AdvancedConditionsForm value={policyDoc} onChange={setPolicyDoc} />
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div>
-              <div className="card-purple rounded-lg p-4">
-                <h3 className="font-semibold mb-4 text-white">Basic Settings</h3>
-                <PolicyBasicsForm value={policyDoc} onChange={setPolicyDoc} />
+          {/* Right: Preview */}
+          <div className="lg:sticky lg:top-6 self-start">
+            <h2 className="text-sm font-semibold mb-3 text-white">Preview</h2>
+            <PolicyPreview
+              compiled={compiled}
+              policyDocument={policyDoc}
+              loading={loading}
+              error={error}
+            />
+
+            {installError && (
+              <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                <p className="text-sm text-red-400">{installError}</p>
               </div>
+            )}
 
-              <div className="mt-4 card-purple rounded-lg p-4">
-                <h3 className="font-semibold mb-3 text-white">Advanced Conditions</h3>
-                <p className="text-xs text-purple-muted mb-3">
-                  Add optional safety conditions to restrict when and how transfers can occur
-                </p>
-                <AdvancedConditionsForm value={policyDoc} onChange={setPolicyDoc} />
-              </div>
-            </div>
-
-            <div>
-              <div className="lg:sticky lg:top-20">
-                <h3 className="font-semibold mb-3 text-white">Preview</h3>
-                <PolicyPreview
-                  compiled={compiled}
-                  policyDocument={policyDoc}
-                  loading={loading}
-                  error={error}
-                  onPolicyChange={(policy) => setPolicyDoc(policy as PolicyFormState)}
-                />
-
-                {installError && (
-                  <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-                    <div className="text-sm text-red-400">{installError}</div>
-                  </div>
+            {compiled?.valid && (
+              <button
+                onClick={handleInstall}
+                disabled={installing}
+                className="w-full mt-4 px-5 py-3 btn-purple rounded-lg text-sm font-medium text-white flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {installing ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Installing...
+                  </>
+                ) : (
+                  <>
+                    Install Adapter
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                  </>
                 )}
-
-                {compiled?.valid && (
-                  <button
-                    onClick={handleContinue}
-                    disabled={installing}
-                    className="w-full mt-4 px-6 py-3 btn-purple rounded-lg font-medium text-white flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {installing ? (
-                      <>
-                        <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                        </svg>
-                        Installing...
-                      </>
-                    ) : (
-                      <>
-                        Install Adapter
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                          <path
-                            fillRule="evenodd"
-                            d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </>
-                    )}
-                  </button>
-                )}
-              </div>
-            </div>
+              </button>
+            )}
           </div>
         </div>
       </div>
