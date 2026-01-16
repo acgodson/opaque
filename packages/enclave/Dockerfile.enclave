@@ -30,4 +30,6 @@ ENV NODE_OPTIONS="--max-old-space-size=1536"
 
 EXPOSE 5000 5001
 
-CMD ["./start.sh"]
+# Use start.sh directly as PID 1 (no entrypoint wrapper)
+ENTRYPOINT []
+CMD ["/app/start.sh"]
