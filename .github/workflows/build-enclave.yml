@@ -5,12 +5,10 @@ on:
     branches: [main, develop]
     paths:
       - 'packages/enclave/**'
-      - '!packages/enclave/**/key-store.ts'  # Exclude key-store.ts
       - '.github/workflows/build-enclave.yml'
   pull_request:
     paths:
       - 'packages/enclave/**'
-      - '!packages/enclave/**/key-store.ts'  # Exclude key-store.ts
 
 env:
   REGISTRY: ghcr.io
@@ -34,8 +32,10 @@ jobs:
 
       - name: Install dependencies
         working-directory: packages/enclave
-        run: npm ci
-
+        run: |
+          rm -f package-lock.json
+          npm install
+          
       - name: Build TypeScript
         working-directory: packages/enclave
         run: npm run build
