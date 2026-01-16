@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Opaque - Pitch Deck</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Rajdhani', sans-serif; overflow: hidden; background: #000; }
+        .slide-container { width: 100vw; height: 100vh; position: relative; overflow: hidden; }
+        .slide {
+            width: 100%; height: 100%; position: absolute; top: 0; left: 0;
+            opacity: 0; transition: opacity 0.6s ease; pointer-events: none;
+        }
+        .slide.active { opacity: 1; pointer-events: auto; }
+        .grid-bg {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-image:
+                repeating-linear-gradient(0deg, transparent, transparent 49px, rgba(138, 43, 226, 0.05) 49px, rgba(138, 43, 226, 0.05) 50px),
+                repeating-linear-gradient(90deg, transparent, transparent 49px, rgba(138, 43, 226, 0.05) 49px, rgba(138, 43, 226, 0.05) 50px);
+        }
+        .gradient-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(ellipse at 30% 20%, rgba(138, 43, 226, 0.12) 0%, transparent 50%),
+                        radial-gradient(ellipse at 70% 60%, rgba(75, 0, 130, 0.08) 0%, transparent 50%),
+                        linear-gradient(180deg, #000 0%, #050208 100%);
+        }
+        .content {
+            position: relative; z-index: 10; height: 100%;
+            display: flex; flex-direction: column; padding: 40px 60px;
+        }
+        .opaque-logo {
+            font-family: 'Orbitron', sans-serif; font-size: clamp(60px, 10vw, 100px);
+            font-weight: 900; letter-spacing: 6px; color: #fff;
+            text-shadow: 0 0 30px rgba(138, 43, 226, 0.6);
+        }
+        .subtitle {
+            font-size: clamp(18px, 3vw, 28px); color: rgba(218, 112, 214, 0.9);
+            margin-top: 10px; letter-spacing: 1px;
+        }
+        .section-title {
+            font-family: 'Orbitron', sans-serif; font-size: clamp(28px, 5vw, 48px);
+            font-weight: 700; color: rgba(138, 43, 226, 0.95);
+            text-shadow: 0 0 20px rgba(138, 43, 226, 0.4); margin-bottom: 20px;
+        }
+        .card {
+            background: rgba(15, 10, 25, 0.8); border: 1px solid rgba(138, 43, 226, 0.3);
+            padding: 25px 30px; border-radius: 8px; margin-bottom: 15px;
+        }
+        .card-title {
+            font-family: 'Orbitron', sans-serif; font-size: clamp(16px, 2vw, 22px);
+            color: rgba(218, 112, 214, 0.95); margin-bottom: 10px;
+        }
+        .card-text {
+            font-size: clamp(14px, 1.8vw, 18px); color: rgba(200, 180, 220, 0.85);
+            line-height: 1.5;
+        }
+        .card-text strong { color: rgba(218, 112, 214, 1); }
+        .highlight-card {
+            background: rgba(138, 43, 226, 0.1); border: 2px solid rgba(138, 43, 226, 0.5);
+        }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+        .footer {
+            margin-top: auto; padding-top: 20px;
+            border-top: 1px solid rgba(138, 43, 226, 0.2);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .footer-text { font-size: 14px; color: rgba(180, 160, 200, 0.6); }
+        .slide-number {
+            font-family: 'Orbitron', sans-serif; font-size: 20px;
+            color: rgba(218, 112, 214, 0.8);
+        }
+        .nav-buttons {
+            position: fixed; bottom: 30px; right: 30px; z-index: 100;
+            display: flex; gap: 10px;
+        }
+        .nav-btn {
+            width: 45px; height: 45px; border: 1px solid rgba(138, 43, 226, 0.5);
+            background: rgba(138, 43, 226, 0.15); color: rgba(218, 112, 214, 0.9);
+            font-size: 20px; cursor: pointer; display: flex; align-items: center;
+            justify-content: center; font-family: 'Orbitron', sans-serif;
+            transition: all 0.2s ease;
+        }
+        .nav-btn:hover:not(:disabled) {
+            background: rgba(138, 43, 226, 0.3); transform: scale(1.05);
+        }
+        .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        .flow-item {
+            display: flex; align-items: center; gap: 15px; padding: 15px 20px;
+            background: rgba(15, 10, 25, 0.8); border: 1px solid rgba(138, 43, 226, 0.3);
+            border-radius: 6px; margin-bottom: 10px;
+        }
+        .flow-icon { font-size: 28px; min-width: 40px; text-align: center; }
+        .flow-label {
+            font-family: 'Orbitron', sans-serif; font-size: clamp(14px, 1.6vw, 18px);
+            color: rgba(218, 112, 214, 0.95); min-width: 150px;
+        }
+        .flow-desc { font-size: clamp(13px, 1.4vw, 16px); color: rgba(200, 180, 220, 0.8); }
+        .arrow { text-align: center; font-size: 24px; color: rgba(138, 43, 226, 0.5); padding: 5px 0; }
+        .stat-box {
+            text-align: center; padding: 20px;
+            background: rgba(15, 10, 25, 0.8); border: 1px solid rgba(138, 43, 226, 0.3);
+            border-radius: 6px;
+        }
+        .stat-value {
+            font-family: 'Orbitron', sans-serif; font-size: clamp(24px, 4vw, 36px);
+            color: rgba(218, 112, 214, 1); font-weight: 700;
+        }
+        .stat-label { font-size: clamp(12px, 1.4vw, 16px); color: rgba(200, 180, 220, 0.7); margin-top: 5px; }
+        .link { color: rgba(138, 43, 226, 0.9); text-decoration: none; }
+        .link:hover { text-decoration: underline; }
+        @media (max-width: 768px) {
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+            .content { padding: 20px 30px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <!-- Slide 0: Title -->
+        <div class="slide active">
+            <div class="grid-bg"></div>
+            <div class="gradient-overlay"></div>
+            <div class="content" style="justify-content: center; align-items: center; text-align: center;">
+                <div class="opaque-logo">OPAQUE</div>
+                <div class="subtitle">Trust-Minimized Automation for Web3 Agents</div>
+                <p style="margin-top: 30px; font-size: clamp(14px, 2vw, 20px); color: rgba(200, 180, 220, 0.7); max-width: 700px;">
+                    ZK policy enforcement that allows agents to execute on-chain actions<br>
+                    without knowing or manipulating the rules that govern them.
+                </p>
+                <div class="footer" style="position: absolute; bottom: 40px; left: 60px; right: 60px;">
+                    <div class="footer-text">Mantle Global Hackathon 2025 • Built with Noir + Mantle</div>
+                    <div class="slide-number">01</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 1: Problem -->
+        <div class="slide">
+            <div class="grid-bg"></div>
+            <div class="gradient-overlay"></div>
+            <div class="content">
+                <div class="section-title" style="color: rgba(220, 20, 60, 0.95);">The Problem</div>
+                <div class="card highlight-card" style="border-color: rgba(220, 20, 60, 0.4);">
+                    <div class="card-text" style="font-size: clamp(16px, 2vw, 22px);">
+                        Web3 agents are vulnerable to <strong style="color: rgba(255, 100, 150, 1);">context manipulation attacks</strong>:
+                        prompt injection, memory poisoning, and persistent context corruption.
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-text">
+                        These attacks <strong>don't require breaking cryptography</strong>. They exploit the fact that
+                        agents decide what to do based on context they cannot reliably verify.
+                    </div>
+                </div>
+                <div class="card" style="background: rgba(0,0,0,0.4); border-left: 3px solid rgba(138, 43, 226, 0.5);">
+                    <div class="card-text" style="font-style: italic;">
+                        "Prompt filtering and guardrails are insufficient once agent memory is compromised."
+                    </div>
+                    <div style="margin-top: 10px; font-size: 14px; color: rgba(218, 112, 214, 0.8);">
+                        — Patlan et al., Cornell / UIUC, 2025 (arXiv:2503.16248)
+                    </div>
+                </div>
+                <div class="footer">
+                    <div class="footer-text">Mantle Global Hackathon 2025</div>
+                    <div class="slide-number">02</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: Solution -->
+        <div class="slide">
+            <div class="grid-bg"></div>
+            <div class="gradient-overlay"></div>
+            <div class="content">
+                <div class="section-title">The Solution</div>
+                <div class="card highlight-card" style="text-align: center; padding: 40px;">
+                    <div class="card-text" style="font-size: clamp(18px, 2.5vw, 28px);">
+                        An agent should <strong>never know why</strong> it is allowed to act.<br>
+                        It should only know <strong>whether</strong> it is allowed.
+                    </div>
+                    <div style="margin-top: 20px; font-size: clamp(14px, 1.8vw, 18px); color: rgba(138, 43, 226, 0.9);">
+                        Opaque enforces this separation cryptographically.
+                    </div>
+                </div>
+                <div class="grid-2" style="margin-top: 20px;">
+                    <div class="flow-item">
+                        <div class="flow-icon">🤖</div>
+                        <div>
+                            <div class="flow-label">Agent Proposes</div>
+                            <div class="flow-desc">Generates candidate actions</div>
+                        </div>
+                    </div>
+                    <div class="flow-item">
+                        <div class="flow-icon">🔒</div>
+                        <div>
+                            <div class="flow-label">Enclave Evaluates</div>
+                            <div class="flow-desc">Hidden policy logic</div>
+                        </div>
+                    </div>
+                    <div class="flow-item">
+                        <div class="flow-icon">✓</div>
+                        <div>
+                            <div class="flow-label">ZK Proof</div>
+                            <div class="flow-desc">Noir circuit attestation</div>
+                        </div>
+                    </div>
+                    <div class="flow-item">
+                        <div class="flow-icon">⛓️</div>
+                        <div>
+                            <div class="flow-label">On-Chain Verify</div>
+                            <div class="flow-desc">Mantle execution</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="footer">
+                    <div class="footer-text">Mantle Global Hackathon 2025</div>
+                    <div class="slide-number">03</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: Architecture -->
+        <div class="slide">
+            <div class="grid-bg"></div>
+            <div class="gradient-overlay"></div>
+            <div class="content">
+                <div class="section-title">Architecture</div>
+                <div class="flow-item"><div class="flow-icon">👤</div><div><div class="flow-label">User Dashboard</div><div class="flow-desc">Configure policies, install adapters</div></div></div>
+                <div class="arrow">↓</div>
+                <div class="flow-item"><div class="flow-icon">🔧</div><div><div class="flow-label">Web Backend (tRPC)</div><div class="flow-desc">Store policies in DB, push to enclave</div></div></div>
+                <div class="arrow">↓</div>
+                <div class="flow-item" style="border-color: rgba(138, 43, 226, 0.6); background: rgba(138, 43, 226, 0.1);">
+                    <div class="flow-icon">🔐</div>
+                    <div><div class="flow-label">AWS Nitro Enclave</div><div class="flow-desc">ZK proof generation (Noir + Barretenberg), offline CRS</div></div>
+                </div>
+                <div class="arrow">↓</div>
+                <div class="flow-item"><div class="flow-icon">🤖</div><div><div class="flow-label">ElizaOS Agent</div><div class="flow-desc">Request proof → Sign with own wallet → Submit to verifier</div></div></div>
+                <div class="footer">
+                    <div class="footer-text">Mantle Global Hackathon 2025</div>
+                    <div class="slide-number">04</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: Business Model -->
+        <div class="slide">
+            <div class="grid-bg"></div>
+            <div class="gradient-overlay"></div>
+            <div class="content">
+                <div class="section-title">Business Model</div>
+                <div class="grid-3">
+                    <div class="card">
+                        <div class="card-title">🎯 Target Users</div>
+                        <div class="card-text">
+                            • DAOs with treasury agents<br>
+                            • DeFi protocols with automation<br>
+                            • Families/orgs with spending bots<br>
+                            • Any agent handling value
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">💰 Revenue</div>
+                        <div class="card-text">
+                            • Per-proof fees (micro-payments)<br>
+                            • Enterprise enclave hosting<br>
+                            • Custom policy development<br>
+                            • Adapter marketplace fees
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">🚀 Roadmap</div>
+                        <div class="card-text">
+                            • Q1: Multi-chain support<br>
+                            • Q2: Policy templates marketplace<br>
+                            • Q3: Decentralized enclave network<br>
+                            • Q4: SDK for custom adapters
+                        </div>
+                    </div>
+                </div>
+                <div class="card highlight-card" style="margin-top: 20px;">
+                    <div class="card-title">Competitive Advantage</div>
+                    <div class="card-text">
+                        Only solution that makes <strong>context manipulation irrelevant</strong> — policies are enforced
+                        cryptographically outside the agent's context, not through guardrails that can be bypassed.
+                    </div>
+                </div>
+                <div class="footer">
+                    <div class="footer-text">Mantle Global Hackathon 2025</div>
+                    <div class="slide-number">05</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: Demo & Links -->
+        <div class="slide">
+            <div class="grid-bg"></div>
+            <div class="gradient-overlay"></div>
+            <div class="content">
+                <div class="section-title">Demo & Resources</div>
+                <div class="grid-3">
+                    <div class="stat-box">
+                        <div class="stat-value">8/8</div>
+                        <div class="stat-label">Integration Tests Passing</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value">~2s</div>
+                        <div class="stat-label">Proof Generation Time</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value">2.1MB</div>
+                        <div class="stat-label">Offline CRS Cache</div>
+                    </div>
+                </div>
+                <div class="card" style="margin-top: 20px;">
+                    <div class="card-title">🔗 Links</div>
+                    <div class="card-text">
+                        <strong>Demo Video:</strong> <a class="link" href="https://vimeo.com/1154584994" target="_blank">vimeo.com/1154584994</a><br>
+                        <strong>Live App:</strong> <a class="link" href="https://opaque-web.vercel.app" target="_blank">opaque-web.vercel.app</a><br>
+                        <strong>GitHub:</strong> <a class="link" href="https://github.com/acgodson/opaque" target="_blank">github.com/acgodson/opaque</a><br>
+                        <strong>npm Plugin:</strong> <a class="link" href="https://www.npmjs.com/package/@tinybirdpro/plugin-opaque" target="_blank">@tinybirdpro/plugin-opaque</a>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title">👤 Team</div>
+                    <div class="card-text">
+                        Solo build by <strong>@acgodson</strong> — <a class="link" href="https://twitter.com/Ac_godson" target="_blank">twitter.com/Ac_godson</a>
+                    </div>
+                </div>
+                <div class="card" style="background: rgba(0,0,0,0.4);">
+                    <div class="card-title">⚖️ Compliance</div>
+                    <div class="card-text" style="font-size: 14px;">
+                        This project does not involve regulated assets. Demo uses test tokens (MCK) on Mantle Sepolia testnet.
+                    </div>
+                </div>
+                <div class="footer">
+                    <div class="footer-text">Mantle Global Hackathon 2025 • Built with Noir + Mantle</div>
+                    <div class="slide-number">06</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="nav-buttons">
+        <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">◄</button>
+        <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">►</button>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+            document.getElementById('prevBtn').disabled = currentSlide === 0;
+            document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+        }
+        function changeSlide(direction) { showSlide(currentSlide + direction); }
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') changeSlide(-1);
+            if (e.key === 'ArrowRight') changeSlide(1);
+        });
+        showSlide(0);
+    </script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 {
-  "name": "plugin-opaque",
-  "description": "${PLUGINDESCRIPTION}",
+  "name": "@tinybirdpro/plugin-opaque",
+  "description": "ElizaOS plugin for Opaque - Zero-knowledge proof generation in AWS Nitro Enclave for privacy-preserving blockchain transactions",
   "version": "0.1.0",
   "type": "module",
   "main": "dist/index.js",
@@ -8,19 +8,25 @@
   "types": "dist/index.d.ts",
   "packageType": "plugin",
   "platform": "node",
-  "license": "UNLICENSED",
-  "author": "${GITHUB_USERNAME}",
+  "license": "MIT",
+  "author": "acgodson",
   "keywords": [
     "plugin",
-    "elizaos"
+    "elizaos",
+    "zero-knowledge",
+    "zk-proofs",
+    "nitro-enclave",
+    "privacy",
+    "blockchain",
+    "opaque"
   ],
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "https://github.com/acgodson/opaque"
   },
-  "homepage": "https://elizaos.ai",
+  "homepage": "https://github.com/acgodson/opaque",
   "bugs": {
-    "url": "https://github.com/${GITHUB_USERNAME}/${PLUGINNAME}/issues"
+    "url": "https://github.com/acgodson/opaque/issues"
   },
   "exports": {
     "./package.json": "./package.json",

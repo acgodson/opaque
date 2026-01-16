@@ -1,105 +1,149 @@
-# Opaque Plugin for ElizaOS
+# @tinybirdpro/plugin-opaque
 
-ZK policy-based transaction execution plugin that enables ElizaOS agents to execute blockchain transactions with cryptographic policy enforcement.
+ElizaOS plugin for Opaque - Zero-knowledge proof generation in AWS Nitro Enclave for privacy-preserving blockchain transactions.
 
 ## Features
 
-- 🔐 **Zero-Knowledge Proofs**: Policy compliance verified without revealing transaction details
-- 🤖 **AI Agent Integration**: Natural language → secure blockchain execution
-- 📋 **Flexible Policies**: Max amounts, time windows, recipient whitelists
-- 🔒 **Replay Protection**: Nullifier system prevents double-spending
-- ⚡ **Fast**: ~3-4 second proof generation
+-  **Privacy-Preserving**: Generate ZK proofs inside from Enclave Endpoints
+-  **Policy Enforcement**: Enforce spending limits, time windows, and whitelists
+-  **Blockchain Integration**: Execute transactions on Mantle with verified proofs
+-  **Secure**: Proofs generated in hardware-isolated environment
+-  **Easy Integration**: Simple ElizaOS plugin interface
 
 ## Installation
 
 ```bash
-bun add @opaque/plugin-elizaos
-```
-
-Or use locally:
-```bash
-elizaos add ./plugin-opaque
+npm install @tinybirdpro/plugin-opaque
+# or
+bun add @tinybirdpro/plugin-opaque
 ```
 
 ## Configuration
 
-Create a `.env` file or set environment variables:
+Add these environment variables to your `.env` file:
 
-```bash
+```env
+
+# Agent Wallet Configuration
+AGENT_PRIVATE_KEY=0x...
+
 # User Configuration
-OPAQUE_USER_ADDRESS=0x...              # User's Ethereum address
-OPAQUE_INSTALLATION_ID=1               # Installation ID from dashboard
+OPAQUE_USER_ADDRESS=0x...
+OPAQUE_INSTALLATION_ID=1
 
-# Opaque Configuration
-OPAQUE_VERIFIER_ADDRESS=0x...          # OpaqueVerifier contract address
-OPAQUE_ENCLAVE_URL=http://35.159.224.254:8001  # Enclave endpoint
+# Contract Addresses (Mantle Sepolia)
+OPAQUE_VERIFIER_ADDRESS=0x...
+OPAQUE_TOKEN_ADDRESS=0x...
+
+# Enclave URL
+OPAQUE_ENCLAVE_URL=http://{INSTANCE-IP}:8001
 ```
 
 ## Usage
-                                                                                                                    
-### 1. Add Plugin to Agent
 
-```typescript
-import { opaquePlugin } from '@opaque/plugin-elizaos';
+### In your ElizaOS character file:
 
-const agent = {
-  name: "OpaqueAgent",
-  plugins: [opaquePlugin],
-  // ... other config
-};
+```json
+{
+  "name": "YourAgent",
+  "plugins": ["@tinybirdpro/plugin-opaque"],
+  "settings": {
+    "secrets": {}
+  }
+}
 ```
 
-### 2. Configure Policies
+### Example Interaction:
 
-Visit the Opaque Dashboard to configure policies:
-- Maximum transaction amounts
-- Allowed time windows
-- Recipient whitelists
-
-### 3. Execute Transactions
-
-Chat with your agent:
 ```
-User: Send 0.1 MNT to 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb
-Agent: I'll execute that transfer via Opaque. Generating ZK proof...
-Agent: Transaction executed successfully! Tx Hash: 0x...
+User: Send 50 USDC to 0x1234...5678
+
+Agent: I'll execute this transaction with privacy protection using Opaque.
+       [Generates ZK proof in enclave]
+       [Verifies on-chain]
+       ✅ Transaction executed: 0xabcd...
 ```
 
 ## How It Works
 
-1. **User configures policies** in the Web Dashboard
-2. **Agent parses intent** from natural language
-3. **Enclave generates ZK proof** verifying policy compliance
-4. **Agent signs transaction** with its Privy wallet
-5. **OpaqueVerifier contract** verifies proof and executes on-chain
+1. **Policy Storage**: User policies are stored in a remote Enclave
+2. **Proof Generation**: When executing a transaction, the agent:
+   - Sends transaction data to the enclave via proxy url
+   - Enclave validates against stored policies
+   - Generates a ZK proof if policies are satisfied
+3. **On-Chain Verification**: Proof is verified on-chain before execution
+4. **Transaction Execution**: If proof is valid, transaction executes
 
-## Actions
+## Architecture
 
-### EXECUTE_WITH_PROOF
+```
+ElizaOS Agent
+    ↓
+Plugin Opaque
+    ↓
+AWS Nitro Enclave (Port 8001)
+    ├── Policy Storage
+    ├── Noir Circuit
+    ├── Barretenberg (ZK Proof)
+    └── Offline CRS Cache
+    ↓
+Mantle Blockchain
+    ├── Verifier Contract
+    └── Vault Contract
+```
 
-Executes a blockchain transaction through the Opaque ZK policy system.
+## API
 
-**Triggers**: 
-- "Send X tokens to ADDRESS"
-- "Transfer X to ADDRESS"
-- "Pay ADDRESS X amount"
+### Actions
 
-**Example**:
+#### `EXECUTE_OPAQUE_TRANSACTION`
+
+Execute a transaction with ZK proof generation.
+
+**Parameters:**
+- `recipient`: Address to send tokens to
+- `amount`: Amount to send (in token units)
+
+**Example:**
 ```typescript
 {
-  name: "EXECUTE_WITH_PROOF",
-  description: "Execute blockchain transaction with ZK policy verification",
-  validate: async (runtime, message) => {
-    // Checks for required configuration
+  "action": "EXECUTE_OPAQUE_TRANSACTION",
+  "recipient": "0x1234567890123456789012345678901234567890",
+  "amount": "50000000000000000000"
+}
+```
+
+## Policy Configuration
+
+Policies are configured per user and installation:
+
+```typescript
+{
+  "maxAmount": {
+    "enabled": true,
+    "limit": "100000000000000000000" // 100 tokens
   },
-  handler: async (runtime, message, state, options, callback) => {
-    // 1. Parse transaction details
-    // 2. Request ZK proof from enclave
-    // 3. Sign transaction
-    // 4. Submit to OpaqueVerifier
+  "timeWindow": {
+    "enabled": true,
+    "startHour": 9,
+    "endHour": 17
+  },
+  "whitelist": {
+    "enabled": true,
+    "root": "0x...",
+    "path": ["0x...", "0x..."],
+    "index": 0
   }
 }
 ```
+
+## Enclave Attestation
+
+The enclave provides cryptographic proof that proofs are generated in a genuine AWS Nitro Enclave:
+
+**PCR0**: `c498ee76151fbd1cf0a5824cb958a2b6dfd4757eeebc0997abefa62ad095693bf5714aa6b8122836f67bc43b27c792ba`
+
+Anyone can verify by rebuilding the enclave and comparing PCR measurements.
 
 ## Development
 
@@ -112,28 +156,20 @@ bun run build
 
 # Run tests
 bun test
-
-# Development mode
-elizaos dev
 ```
-
-## Architecture
-
-```
-User Message → ElizaOS Agent → Enclave (ZK Proof) → Agent Signs → OpaqueVerifier → Execution
-```
-
-## Security
-
-- **Enclave Isolation**: Proof generation in secure Docker environment
-- **Private Keys**: Agent wallet keys never exposed to enclave
-- **Policy Enforcement**: Cryptographically enforced on-chain
-- **Replay Protection**: Nullifiers prevent transaction replay
 
 ## Links
 
-- [Documentation](https://github.com/acgodson/opaque)
-- [Web Dashboard](https://opaque-web-nine.vercel.app)
-- [Smart Contracts](https://github.com/acgodson/opaque/tree/main/mantle_hardhat)
+- [GitHub Repository](https://github.com/acgodson/opaque)
+- [Enclave Documentation](https://github.com/acgodson/opaque/blob/main/ATTESTATION.md)
+- [ElizaOS Documentation](https://docs.elizaos.ai)
 
-                                                                                                                                                    
+## License
+
+MIT
+
+## Support
+
+For issues and questions:
+- GitHub Issues: https://github.com/acgodson/opaque/issues
+- Enclave Endpoint: http://{instance-pubic-ip}:8001

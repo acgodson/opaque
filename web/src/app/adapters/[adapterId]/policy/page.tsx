@@ -57,7 +57,8 @@ export default function AdapterPolicyBuilder() {
       const tokenSymbol = "MCK";
       const tokenDecimals = 18;
 
-      const result = await installMutation.mutateAsync({
+      // Install adapter - this saves to DB AND stores policy in enclave
+      await installMutation.mutateAsync({
         userAddress: address,
         adapterId,
         config: compiled.config,
@@ -66,29 +67,6 @@ export default function AdapterPolicyBuilder() {
         tokenSymbol,
         tokenDecimals,
       });
-
-      const installationId = result.installed.id;
-
-      const enclaveUrl = process.env.NEXT_PUBLIC_ENCLAVE_URL || "http://35.159.224.254:8001";
-      const enclaveResponse = await fetch(enclaveUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "STORE_POLICY_CONFIG",
-          userAddress: address,
-          installationId,
-          policyConfig: compiled.config,
-        }),
-      });
-
-      if (!enclaveResponse.ok) {
-        throw new Error(`Enclave request failed: ${enclaveResponse.statusText}`);
-      }
-
-      const enclaveData = await enclaveResponse.json();
-      if (enclaveData.status !== "success") {
-        throw new Error(enclaveData.message || "Failed to store policy in enclave");
-      }
 
       router.push("/dashboard");
     } catch (err) {

@@ -193,6 +193,30 @@ export const adaptersRouter = createTRPCRouter({
         })
         .returning();
 
+      // Store policy config in enclave
+      const enclaveUrl = process.env.ENCLAVE_URL || "http://35.159.224.254:8001";
+      try {
+        const enclaveResponse = await fetch(enclaveUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: "STORE_POLICY_CONFIG",
+            userAddress: input.userAddress,
+            installationId: inserted.id,
+            policyConfig: processedConfig,
+          }),
+        });
+
+        const enclaveData = await enclaveResponse.json();
+        if (!enclaveData.success) {
+          console.error("[ADAPTERS] Enclave storage failed:", enclaveData);
+          // Don't fail the install, but log the error
+        }
+      } catch (enclaveError) {
+        console.error("[ADAPTERS] Enclave request failed:", enclaveError);
+        // Don't fail the install if enclave is unreachable
+      }
+
       return {
         installed: {
           id: inserted.id,

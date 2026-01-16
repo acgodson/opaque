@@ -4,13 +4,13 @@ import { useRouter } from "next/navigation";
 
 export default function DemoAgentPage() {
   const router = useRouter();
-  const agentUrl = "http://35.159.224.254:3000";
+  const agentUrl = process.env.NEXT_PUBLIC_AGENT_URL;
 
   return (
     <div className="min-h-screen relative">
       <div className="grid-bg" />
       <div className="gradient-overlay" />
-      
+
       <div className="relative z-10">
         <div className="border-b border-purple">
           <div className="max-w-7xl mx-auto px-6 py-4">
@@ -24,7 +24,7 @@ export default function DemoAgentPage() {
                 </svg>
                 Back to Adapters
               </button>
-              
+
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-green-500" />
