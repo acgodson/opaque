@@ -30,7 +30,7 @@ This makes context manipulation attacks (prompt injection, memory poisoning) irr
 
 📊 **[View Pitch Deck](https://opaque-web-nine.vercel.app/pitch.html)**
 
-🌐 **[Live App](https://opaque-web.vercel.app)**
+🌐 **[Live App](https://opaque-web-nine.vercel.app)**
 
 ## Integration Points
 
@@ -71,7 +71,7 @@ See [ElizaOS docs](https://docs.elizaos.ai) for detailed agent setup.
 
 ### 3. Test via Playground
 
-Use the Opaque [Playground](https://opaque-web.vercel.app-nine/playground) to test policy storage and proof generation.
+Use the Opaque [Playground](https://opaque-web-nine.vercel.app/playground) to test policy storage and proof generation.
 
 ## Self-Hosted Enclave
 
